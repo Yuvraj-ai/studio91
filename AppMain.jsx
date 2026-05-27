@@ -444,9 +444,9 @@ export default function Studio91() {
 
           <div style={{ display: "flex", gap: 28, marginTop: 40, paddingTop: 32, borderTop: "1px solid #00ff9f11" }}>
             {[
-              { label: "Email", val: "hello@studio91.dev" },
-              { label: "GitHub", val: "github.com/studio91" },
-              { label: "Twitter", val: "@studio91dev" },
+              { label: "Email", val: "virendremoond@gmail.com" },
+              { label: "GitHub", val: "github.com/virendrachaudhary29" },
+              { label: "Twitter", val: "https://x.com/MoondViren68171" },
             ].map(({ label, val }) => (
               <div key={label}>
                 <p style={{ fontSize: 10, letterSpacing: 3, color: "#00ff9f55", textTransform: "uppercase", marginBottom: 4 }}>{label}</p>
