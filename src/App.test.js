@@ -25,8 +25,8 @@ describe('Studio91 Application', () => {
     expect(screen.getByText(/Less noise\. More clarity\./i)).toBeInTheDocument();
 
     // Founding team
-    expect(screen.getByText('Yuvraj Singh')).toBeInTheDocument();
-    expect(screen.getByText('Virendra Chaudhary')).toBeInTheDocument();
+    expect(screen.getAllByText('Yuvraj Singh').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Virendra Chaudhary').length).toBeGreaterThan(0);
   });
 
   test('renders core studio principles', () => {

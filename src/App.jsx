@@ -475,6 +475,127 @@ const css = `
   .mobile-menu { position: fixed; inset: 0; z-index: 350; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 24px; }
 
   .field-error { font-size: 10px; color: #c0392b; letter-spacing: 0.08em; margin-top: 5px; font-family: var(--mono); }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Redesigned Footer (Sarvam Inspired & Studio91 Brand Book) ── */
+  .footer-container {
+    padding: clamp(56px, 8vw, 108px) clamp(20px, 5vw, 56px) 0;
+    border-top: 1px solid var(--rule);
+    background: var(--bg);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .footer-dir-grid {
+    display: grid;
+    grid-template-columns: 280px repeat(5, 1fr);
+    gap: clamp(24px, 3vw, 44px);
+    align-items: start;
+    padding-bottom: clamp(48px, 6vw, 84px);
+  }
+
+  @media (max-width: 1200px) {
+    .footer-dir-grid {
+      grid-template-columns: 240px repeat(3, 1fr);
+      row-gap: 36px;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .footer-dir-grid {
+      grid-template-columns: 1fr 1fr;
+      row-gap: 32px;
+    }
+    .footer-brand-col {
+      grid-column: 1 / -1;
+      margin-bottom: 24px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .footer-dir-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .footer-dir-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .footer-dir-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--ink);
+    margin-bottom: 8px;
+  }
+
+  .footer-dir-link {
+    font-family: var(--sans);
+    font-size: 13.5px;
+    color: var(--ink-muted);
+    line-height: 1.85;
+    transition: color 0.2s, transform 0.2s;
+    display: inline-block;
+  }
+  .footer-dir-link:hover {
+    color: var(--ink);
+    transform: translateX(2px);
+  }
+
+  .footer-social-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 8px;
+    border: 1px solid var(--rule-strong);
+    background: rgba(255, 255, 255, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink-mid);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .footer-social-btn:hover {
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.95);
+    border-color: var(--ink);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(13, 13, 13, 0.08);
+  }
+
+  .footer-badge-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 10px 14px;
+    border: 1px solid var(--rule-strong);
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 8px;
+    font-family: var(--mono);
+    transition: border-color 0.2s;
+  }
+  .footer-badge-card:hover {
+    border-color: var(--ink);
+  }
+
+  .footer-address-card {
+    padding: 14px 16px;
+    border: 1px solid var(--rule-strong);
+    background: rgba(255, 255, 255, 0.45);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1.65;
+    color: var(--ink-muted);
+  }
 
   @media (max-width: 920px) {
     .grid-1-2, .grid-1-14 { grid-template-columns: 1fr; }
@@ -1382,8 +1503,23 @@ function Team() {
   );
 }
 
-/* ─── CONTACT ─────────────────────────────────────────────────────────────── */
-function Contact() {
+/* ─── FOOTER SLIDESHOW IMAGES ─────────────────────────────────────────────── */
+// The hollow "studio" bottom wordmark cycles through these images.
+// You can replace or add custom image paths here anytime:
+export const FOOTER_SLIDESHOW_IMAGES = [
+  "/creatives/deliberate_restraint_1.png",
+  "/creatives/mental_health_day_1.png",
+  "/creatives/digital_wellness_1.png",
+  "/creatives/deliberate_restraint_2.png",
+  "/creatives/mental_health_day_2.png",
+  "/creatives/digital_wellness_2.png",
+  "/creatives/deliberate_restraint_3.png",
+  "/creatives/deliberate_restraint_4.png",
+];
+
+/* ─── FOOTER & CONTACT ────────────────────────────────────────────────────── */
+function Footer() {
+  // Contact form state
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -1433,268 +1569,512 @@ function Contact() {
     }
   }
 
+  // Slideshow state for hollow "studio" wordmark
+  const [slideIndex, setSlideIndex] = useState(0);
+  const [prevSlideIndex, setPrevSlideIndex] = useState(0);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  useEffect(() => {
+    if (!FOOTER_SLIDESHOW_IMAGES.length) return;
+    const interval = setInterval(() => {
+      setPrevSlideIndex(slideIndex);
+      setSlideIndex((prev) => (prev + 1) % FOOTER_SLIDESHOW_IMAGES.length);
+      setIsTransitioning(true);
+      const timer = setTimeout(() => setIsTransitioning(false), 1200);
+      return () => clearTimeout(timer);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [slideIndex]);
+
+  const advanceSlide = () => {
+    setPrevSlideIndex(slideIndex);
+    setSlideIndex((prev) => (prev + 1) % FOOTER_SLIDESHOW_IMAGES.length);
+    setIsTransitioning(true);
+    setTimeout(() => setIsTransitioning(false), 1200);
+  };
+
+  const directoryColumns = [
+    {
+      title: "Products",
+      links: [
+        { label: "Slow (Mindfulness)", href: "#apps" },
+        { label: "Speech Automation", href: "#apps" },
+        { label: "Human-Centered AI", href: "#about" },
+        { label: "Sensory UI Kit", href: "#campaigns" },
+        { label: "Calm Interfaces", href: "#about" },
+      ],
+    },
+    {
+      title: "Capabilities",
+      links: [
+        { label: "Voice Automation", href: "#about" },
+        { label: "Contextual AI", href: "#about" },
+        { label: "Device Workflows", href: "#apps" },
+        { label: "Tactile Restraint", href: "#campaigns" },
+        { label: "Sensory Design", href: "#about" },
+      ],
+    },
+    {
+      title: "Studio",
+      links: [
+        { label: "About Studio91", href: "#about" },
+        { label: "Brand Philosophy", href: "#about" },
+        { label: "Visual Campaigns", href: "#campaigns" },
+        { label: "Brand Book (Pomelli)", href: "#about" },
+        { label: "Research & Craft", href: "#about" },
+      ],
+    },
+    {
+      title: "Company",
+      links: [
+        { label: "Yuvraj Singh", href: "#team" },
+        { label: "Virendra Chaudhary", href: "#team" },
+        { label: "Jaipur Headquarters", href: "#contact" },
+        { label: "Work With Us", href: "#contact" },
+        { label: "Careers", href: "#contact" },
+      ],
+    },
+    {
+      title: "Legal",
+      links: [
+        { label: "Trust & Ethics", href: "#about" },
+        { label: "Terms of Craft", href: "#about" },
+        { label: "Privacy Policy", href: "#about" },
+        { label: "Accessibility", href: "#about" },
+      ],
+    },
+  ];
+
+  const wordmarkFontStyle = {
+    fontFamily: "var(--serif)",
+    fontSize: "clamp(46px, 15.5vw, 240px)",
+    fontWeight: 700,
+    lineHeight: 0.82,
+    letterSpacing: "-0.04em",
+    userSelect: "none",
+    textTransform: "lowercase",
+  };
+
   return (
-    <section id="contact" className="section" aria-labelledby="contact-heading">
-      <hr className="hr" style={{ marginBottom: "clamp(36px,7vw,80px)" }} />
+    <footer id="contact" role="contentinfo" className="footer-container" aria-labelledby="contact-heading">
+      {/* ── ZONE 1: Contact & Collaborations ── */}
+      <div style={{ marginBottom: "clamp(48px, 7vw, 84px)" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "clamp(32px, 5vw, 64px)", alignItems: "start" }}>
+          {/* Left Column — Manifesto & Direct Contact */}
+          <FadeIn>
+            <div className="pill" style={{ marginBottom: 18 }}>Contact & Collaborations</div>
+            <h2
+              id="contact-heading"
+              style={{
+                fontFamily: "var(--serif)",
+                fontSize: "clamp(28px, 4vw, 50px)",
+                fontWeight: 400,
+                letterSpacing: "-0.025em",
+                lineHeight: 1.06,
+                marginBottom: 18,
+              }}
+            >
+              Let's build
+              <br />
+              <em>something</em>
+              <br />
+              meaningful.
+            </h2>
+            <p style={{ fontSize: "clamp(13px, 1.4vw, 15px)", color: "var(--ink-muted)", lineHeight: 1.8, fontFamily: "var(--sans)", marginBottom: 28 }}>
+              Interested in human-centered AI, speech automation, or mindful product design? We'd love to connect.
+            </p>
 
-      <div className="grid-1-14">
-        {/* Left column */}
-        <FadeIn>
-          <div className="pill" style={{ marginBottom: 18 }}>Contact</div>
-          <h2
-            id="contact-heading"
-            style={{
-              fontFamily: "var(--serif)",
-              fontSize: "clamp(28px,4vw,50px)",
-              fontWeight: 400,
-              letterSpacing: "-0.02em",
-              lineHeight: 1.06,
-              marginBottom: 18,
-            }}
-          >
-            Let's build
-            <br />
-            <em>something</em>
-            <br />
-            meaningful.
-          </h2>
-          <p style={{ fontSize: "clamp(13px,1.4vw,14px)", color: "var(--ink-muted)", lineHeight: 1.8, fontFamily: "var(--sans)", marginBottom: 28 }}>
-            Interested in human-centered AI, speech automation, or mindful product design? We'd love to connect.
-          </p>
-
-          <div className="glass" style={{ padding: "18px 22px", borderRadius: 16, marginTop: 8 }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-              {[
-                { label: "Email", value: "hello@studio91.in", href: "mailto:hello@studio91.in" },
-                { label: "Location", value: "Jaipur, Rajasthan" },
-                { label: "Website", value: "studio91-gs78.vercel.app", href: BRAND.websiteUrl },
-                { label: "Status", value: "Available for projects", dot: "#4ADE80" },
-              ].map(({ label, value, href, dot }) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
-                  <span style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-muted)", fontFamily: "var(--mono)" }}>{label}</span>
-                  {href ? (
-                    <a href={href} style={{ fontSize: 12, color: "var(--ink)", fontFamily: "var(--mono)", textDecoration: "underline", textDecorationColor: "rgba(13,13,13,0.2)" }}>
-                      {value}
-                    </a>
-                  ) : (
-                    <span style={{ fontSize: 12, color: "var(--ink)", fontFamily: "var(--mono)", display: "flex", alignItems: "center", gap: 6 }}>
-                      {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, display: "inline-block" }} />}
-                      {value}
-                    </span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </FadeIn>
-
-        {/* Right column — form */}
-        <FadeIn delay={0.13}>
-          <div className="contact-card" style={{ padding: "clamp(22px,4vw,38px)" }}>
-            <AnimatePresence mode="wait">
-              {sent ? (
-                <motion.div
-                  key="thanks"
-                  initial={{ opacity: 0, y: 14 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.4 }}
-                  style={{ minHeight: 280, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: 14 }}
-                  role="status"
-                  aria-live="polite"
-                  ref={statusRef}
-                  tabIndex={-1}
-                >
-                  <motion.div
-                    initial={{ scale: 0.7 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200, damping: 14 }}
-                    style={{
-                      width: 54, height: 54, borderRadius: 16, marginBottom: 8,
-                      background: "linear-gradient(135deg, var(--accent-dark), var(--accent))",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      fontSize: 22, color: "var(--ink)",
-                      boxShadow: "0 8px 28px rgba(157,196,0,0.35), inset 0 1px 0 rgba(255,255,255,0.5)",
-                    }}
-                    aria-hidden="true"
-                  >
-                    ✓
-                  </motion.div>
-                  <h3 style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 400, letterSpacing: "-0.03em", marginBottom: 6 }}>
-                    Message received.
-                  </h3>
-                  <p style={{ fontSize: 14, color: "var(--ink-muted)", fontFamily: "var(--sans)", lineHeight: 1.7 }}>
-                    We'll get back to you soon. Thanks for reaching out!
-                  </p>
-                  <button
-                    onClick={() => setSent(false)}
-                    style={{
-                      marginTop: 10, padding: "10px 20px",
-                      background: "transparent", border: "1px solid var(--rule-strong)",
-                      borderRadius: 8, fontFamily: "var(--mono)", fontSize: 11,
-                      letterSpacing: "0.1em", textTransform: "uppercase",
-                      color: "var(--ink-mid)", cursor: "pointer", transition: "border-color 0.2s",
-                    }}
-                    onMouseOver={(e) => (e.target.style.borderColor = "var(--ink)")}
-                    onMouseOut={(e) => (e.target.style.borderColor = "var(--rule-strong)")}
-                  >
-                    Send another →
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  {errors._global && (
-                    <div role="alert" style={{
-                      marginBottom: 18, padding: "12px 16px",
-                      background: "rgba(192,57,43,0.07)", border: "1px solid rgba(192,57,43,0.2)",
-                      borderRadius: 10, fontSize: 13, color: "#c0392b", fontFamily: "var(--sans)", lineHeight: 1.6,
-                    }}>
-                      {errors._global}
-                    </div>
-                  )}
-
-                  <div
-                    role="form"
-                    aria-label="Contact form"
-                    onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleSubmit(); }}
-                  >
-                    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-                      <div>
-                        <label className="field-label" htmlFor="contact-name">Your name *</label>
-                        <input
-                          className="field"
-                          id="contact-name"
-                          name="name"
-                          type="text"
-                          value={form.name}
-                          onChange={update}
-                          placeholder="Yuvraj Singh"
-                          autoComplete="name"
-                          aria-required="true"
-                          aria-invalid={!!errors.name}
-                          aria-describedby={errors.name ? "error-name" : undefined}
-                        />
-                        {errors.name && <p id="error-name" className="field-error" role="alert">{errors.name}</p>}
-                      </div>
-
-                      <div>
-                        <label className="field-label" htmlFor="contact-email">Email address *</label>
-                        <input
-                          className="field"
-                          id="contact-email"
-                          name="email"
-                          type="email"
-                          value={form.email}
-                          onChange={update}
-                          placeholder="you@example.com"
-                          autoComplete="email"
-                          aria-required="true"
-                          aria-invalid={!!errors.email}
-                          aria-describedby={errors.email ? "error-email" : undefined}
-                        />
-                        {errors.email && <p id="error-email" className="field-error" role="alert">{errors.email}</p>}
-                      </div>
-
-                      <div>
-                        <label className="field-label" htmlFor="contact-message">Message *</label>
-                        <textarea
-                          className="field"
-                          id="contact-message"
-                          name="message"
-                          rows={5}
-                          value={form.message}
-                          onChange={update}
-                          placeholder="Tell us about your product idea, speech automation vision, or say hello…"
-                          aria-required="true"
-                          aria-invalid={!!errors.message}
-                          aria-describedby={errors.message ? "error-message" : undefined}
-                        />
-                        {errors.message && <p id="error-message" className="field-error" role="alert">{errors.message}</p>}
-                      </div>
-
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginTop: 4 }}>
-                        <button
-                          className="send-btn"
-                          onClick={handleSubmit}
-                          disabled={loading}
-                          aria-busy={loading}
-                          aria-label={loading ? "Sending message…" : "Send message"}
-                        >
-                          {loading ? (
-                            <>
-                              <span style={{
-                                width: 12, height: 12, borderRadius: "50%",
-                                border: "2px solid rgba(245,242,236,0.3)",
-                                borderTopColor: "var(--bg)",
-                                display: "inline-block",
-                                animation: "spin 0.7s linear infinite",
-                              }} aria-hidden="true" />
-                              Sending…
-                            </>
-                          ) : (
-                            "Send message →"
-                          )}
-                        </button>
-                        <span style={{ fontSize: 9, color: "var(--ink-muted)", letterSpacing: "0.1em", fontFamily: "var(--mono)" }}>
-                          ⌃↵ to send
-                        </span>
-                      </div>
-                    </div>
+            <div className="glass" style={{ padding: "18px 22px", borderRadius: 16 }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                {[
+                  { label: "Email", value: "hello@studio91.in", href: "mailto:hello@studio91.in" },
+                  { label: "Location", value: "Jaipur, Rajasthan, India" },
+                  { label: "Website", value: "studio91-gs78.vercel.app", href: BRAND.websiteUrl },
+                  { label: "Status", value: "Available for select projects", dot: "var(--accent-dark)" },
+                ].map(({ label, value, href, dot }) => (
+                  <div key={label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+                    <span style={{ fontSize: 9, letterSpacing: "0.16em", textTransform: "uppercase", color: "var(--ink-muted)", fontFamily: "var(--mono)" }}>{label}</span>
+                    {href ? (
+                      <a href={href} style={{ fontSize: 12, color: "var(--ink)", fontFamily: "var(--mono)", textDecoration: "underline", textDecorationColor: "rgba(13,13,13,0.2)" }}>
+                        {value}
+                      </a>
+                    ) : (
+                      <span style={{ fontSize: 12, color: "var(--ink)", fontFamily: "var(--mono)", display: "flex", alignItems: "center", gap: 6 }}>
+                        {dot && <span style={{ width: 6, height: 6, borderRadius: "50%", background: dot, display: "inline-block" }} />}
+                        {value}
+                      </span>
+                    )}
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </FadeIn>
+                ))}
+              </div>
+            </div>
+          </FadeIn>
+
+          {/* Right Column — Contact Card */}
+          <FadeIn delay={0.12}>
+            <div className="contact-card" style={{ padding: "clamp(22px, 4vw, 38px)" }}>
+              <AnimatePresence mode="wait">
+                {sent ? (
+                  <motion.div
+                    key="thanks"
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.4 }}
+                    style={{ minHeight: 280, display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "flex-start", gap: 14 }}
+                    role="status"
+                    aria-live="polite"
+                    ref={statusRef}
+                    tabIndex={-1}
+                  >
+                    <motion.div
+                      initial={{ scale: 0.7 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, damping: 14 }}
+                      style={{
+                        width: 54, height: 54, borderRadius: 16, marginBottom: 8,
+                        background: "linear-gradient(135deg, var(--accent-dark), var(--accent))",
+                        display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 22, color: "var(--ink)",
+                        boxShadow: "0 8px 28px rgba(157,196,0,0.35), inset 0 1px 0 rgba(255,255,255,0.5)",
+                      }}
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </motion.div>
+                    <h3 style={{ fontFamily: "var(--serif)", fontSize: 28, fontWeight: 400, letterSpacing: "-0.03em", marginBottom: 6 }}>
+                      Message received.
+                    </h3>
+                    <p style={{ fontSize: 14, color: "var(--ink-muted)", fontFamily: "var(--sans)", lineHeight: 1.7 }}>
+                      We'll get back to you soon. Thanks for reaching out!
+                    </p>
+                    <button
+                      onClick={() => setSent(false)}
+                      style={{
+                        marginTop: 10, padding: "10px 20px",
+                        background: "transparent", border: "1px solid var(--rule-strong)",
+                        borderRadius: 8, fontFamily: "var(--mono)", fontSize: 11,
+                        letterSpacing: "0.1em", textTransform: "uppercase",
+                        color: "var(--ink-mid)", cursor: "pointer", transition: "border-color 0.2s",
+                      }}
+                      onMouseOver={(e) => (e.target.style.borderColor = "var(--ink)")}
+                      onMouseOut={(e) => (e.target.style.borderColor = "var(--rule-strong)")}
+                    >
+                      Send another →
+                    </button>
+                  </motion.div>
+                ) : (
+                  <motion.div key="form" initial={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    {errors._global && (
+                      <div role="alert" style={{
+                        marginBottom: 18, padding: "12px 16px",
+                        background: "rgba(192,57,43,0.07)", border: "1px solid rgba(192,57,43,0.2)",
+                        borderRadius: 10, fontSize: 13, color: "#c0392b", fontFamily: "var(--sans)", lineHeight: 1.6,
+                      }}>
+                        {errors._global}
+                      </div>
+                    )}
+
+                    <div
+                      role="form"
+                      aria-label="Contact form"
+                      onKeyDown={(e) => { if (e.key === "Enter" && e.ctrlKey) handleSubmit(); }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+                        <div>
+                          <label className="field-label" htmlFor="contact-name">Your name *</label>
+                          <input
+                            className="field"
+                            id="contact-name"
+                            name="name"
+                            type="text"
+                            value={form.name}
+                            onChange={update}
+                            placeholder="Yuvraj Singh"
+                            autoComplete="name"
+                            aria-required="true"
+                            aria-invalid={!!errors.name}
+                            aria-describedby={errors.name ? "error-name" : undefined}
+                          />
+                          {errors.name && <p id="error-name" className="field-error" role="alert">{errors.name}</p>}
+                        </div>
+
+                        <div>
+                          <label className="field-label" htmlFor="contact-email">Email address *</label>
+                          <input
+                            className="field"
+                            id="contact-email"
+                            name="email"
+                            type="email"
+                            value={form.email}
+                            onChange={update}
+                            placeholder="you@example.com"
+                            autoComplete="email"
+                            aria-required="true"
+                            aria-invalid={!!errors.email}
+                            aria-describedby={errors.email ? "error-email" : undefined}
+                          />
+                          {errors.email && <p id="error-email" className="field-error" role="alert">{errors.email}</p>}
+                        </div>
+
+                        <div>
+                          <label className="field-label" htmlFor="contact-message">Message *</label>
+                          <textarea
+                            className="field"
+                            id="contact-message"
+                            name="message"
+                            rows={4}
+                            value={form.message}
+                            onChange={update}
+                            placeholder="Tell us about your product idea, speech automation vision, or say hello…"
+                            aria-required="true"
+                            aria-invalid={!!errors.message}
+                            aria-describedby={errors.message ? "error-message" : undefined}
+                          />
+                          {errors.message && <p id="error-message" className="field-error" role="alert">{errors.message}</p>}
+                        </div>
+
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, marginTop: 4 }}>
+                          <button
+                            className="send-btn"
+                            onClick={handleSubmit}
+                            disabled={loading}
+                            aria-busy={loading}
+                            aria-label={loading ? "Sending message…" : "Send message"}
+                          >
+                            {loading ? (
+                              <>
+                                <span style={{
+                                  width: 12, height: 12, borderRadius: "50%",
+                                  border: "2px solid rgba(245,242,236,0.3)",
+                                  borderTopColor: "var(--bg)",
+                                  display: "inline-block",
+                                  animation: "spin 0.7s linear infinite",
+                                }} aria-hidden="true" />
+                                Sending…
+                              </>
+                            ) : (
+                              "Send message →"
+                            )}
+                          </button>
+                          <span style={{ fontSize: 9, color: "var(--ink-muted)", letterSpacing: "0.1em", fontFamily: "var(--mono)" }}>
+                            ⌃↵ to send
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          </FadeIn>
+        </div>
       </div>
 
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-    </section>
-  );
-}
+      {/* ── Divider ── */}
+      <hr style={{ border: "none", height: 1, background: "var(--rule)", margin: "clamp(36px, 5vw, 64px) 0" }} />
 
-/* ─── FOOTER ──────────────────────────────────────────────────────────────── */
-function Footer() {
-  return (
-    <footer
-      role="contentinfo"
-      style={{
-        padding: "clamp(24px,4vw,44px) clamp(20px,5vw,56px)",
-        borderTop: "1px solid var(--rule)",
-        display: "flex", alignItems: "center", justifyContent: "space-between",
-        flexWrap: "wrap", gap: 18,
-      }}
-    >
-      <a href="#home" aria-label="Studio91 home" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-        <img
-          src={process.env.PUBLIC_URL + BRAND.logo}
-          alt="Studio91"
-          style={{ height: 22, width: "auto", display: "block" }}
-        />
-      </a>
-      <span style={{ fontSize: 10, color: "var(--ink-muted)", letterSpacing: "0.1em" }}>
-        © 2025 Studio91 · Jaipur, Rajasthan, India
-      </span>
-      <nav aria-label="Social and product links" style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-        {[
-          { name: "Live Site", href: BRAND.websiteUrl },
-          { name: "Twitter", href: "https://twitter.com" },
-          { name: "GitHub", href: "https://github.com/Yuvraj-ai/studio91" },
-        ].map((s) => (
-          <a
-            key={s.name}
-            href={s.href}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{ fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--ink-muted)", transition: "color 0.2s" }}
-            onMouseOver={(e) => (e.target.style.color = "var(--ink)")}
-            onMouseOut={(e) => (e.target.style.color = "var(--ink-muted)")}
-            aria-label={`${s.name} (opens in new tab)`}
-          >
-            {s.name}
+      {/* ── ZONE 2: Sarvam-Style Directory Grid ── */}
+      <div className="footer-dir-grid">
+        {/* Brand Column (replaces Sarvam) */}
+        <div className="footer-brand-col" style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+          <a href="#home" aria-label="Studio91 home" style={{ display: "inline-flex", alignItems: "center" }}>
+            <img
+              src={process.env.PUBLIC_URL + BRAND.logo}
+              alt="Studio91"
+              style={{ height: 28, width: "auto", display: "block" }}
+            />
           </a>
+
+          <p style={{ fontFamily: "var(--sans)", fontSize: 13, color: "var(--ink-muted)", lineHeight: 1.65, margin: 0 }}>
+            Software that feels human.
+            <br />
+            AI & mindful digital craft from India.
+          </p>
+
+          {/* Two Studio Badges (matching Sarvam's ISO / SOC2 style) */}
+          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div className="footer-badge-card">
+              <span style={{ fontSize: 8, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 2 }}>
+                EST. 2024
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink)" }}>
+                JAIPUR, RJ
+              </span>
+              <span style={{ fontSize: 8, color: "var(--accent-dark)", letterSpacing: "0.08em" }}>
+                STUDIO91
+              </span>
+            </div>
+
+            <div className="footer-badge-card">
+              <span style={{ fontSize: 8, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--ink-muted)", marginBottom: 2 }}>
+                HUMAN-AI
+              </span>
+              <span style={{ fontSize: 11, fontWeight: 500, color: "var(--ink)" }}>
+                ZERO BLOAT
+              </span>
+              <span style={{ fontSize: 8, color: "var(--accent-dark)", letterSpacing: "0.08em" }}>
+                MINIMAL CRAFT
+              </span>
+            </div>
+          </div>
+
+          {/* Social icons row ("Find us at") */}
+          <div>
+            <span style={{
+              display: "block",
+              fontSize: 10,
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "var(--ink-muted)",
+              fontFamily: "var(--mono)",
+              marginBottom: 10,
+            }}>
+              Find us at
+            </span>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="footer-social-btn" aria-label="LinkedIn">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="footer-social-btn" aria-label="X / Twitter">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="footer-social-btn" aria-label="YouTube">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+              </a>
+              <a href="https://github.com/Yuvraj-ai/studio91" target="_blank" rel="noopener noreferrer" className="footer-social-btn" aria-label="GitHub">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+              </a>
+              <a href="https://discord.com" target="_blank" rel="noopener noreferrer" className="footer-social-btn" aria-label="Discord">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.929 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.894.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+              </a>
+              <a href="mailto:hello@studio91.in" className="footer-social-btn" aria-label="Email Studio91">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+              </a>
+            </div>
+          </div>
+
+          {/* Address Card (matching Sarvam address card in Picture 2) */}
+          <div className="footer-address-card">
+            <p style={{ margin: "0 0 8px", fontWeight: 500, color: "var(--ink)" }}>
+              © 2025 Studio91 Labs.
+              <br />
+              All rights reserved.
+            </p>
+            <p style={{ margin: 0, fontSize: 10.5, color: "var(--ink-muted)", lineHeight: 1.5 }}>
+              C-Scheme / Malviya Nagar,
+              <br />
+              Jaipur, Rajasthan 302017,
+              <br />
+              India
+            </p>
+          </div>
+        </div>
+
+        {/* Directory Link Columns (5 columns matching Picture 2) */}
+        {directoryColumns.map((col) => (
+          <div key={col.title} className="footer-dir-col">
+            <span className="footer-dir-title">{col.title}</span>
+            {col.links.map((lnk) => (
+              <a key={lnk.label} href={lnk.href} className="footer-dir-link">
+                {lnk.label}
+              </a>
+            ))}
+          </div>
         ))}
-      </nav>
+      </div>
+
+      {/* ── ZONE 3: Showstopper Giant Wordmark (Hollow "studio" slideshow + green "91") ── */}
+      <div
+        className="footer-wordmark-wrap"
+        style={{
+          width: "100%",
+          overflow: "hidden",
+          borderTop: "1px solid var(--rule)",
+          paddingTop: "clamp(28px, 4vw, 54px)",
+          marginBottom: "-0.04em",
+          display: "flex",
+          alignItems: "baseline",
+          justifyContent: "space-between",
+          cursor: "pointer",
+        }}
+        onClick={advanceSlide}
+        title="Click to cycle slideshow visuals"
+      >
+        <div style={{ display: "flex", alignItems: "baseline", gap: "clamp(4px, 1.2vw, 18px)", width: "100%" }}>
+          {/* Hollow "studio" with interior photo slideshow */}
+          <div style={{ position: "relative", display: "inline-block" }}>
+            {/* Base slide */}
+            <div
+              style={{
+                ...wordmarkFontStyle,
+                backgroundImage: `url(${process.env.PUBLIC_URL + FOOTER_SLIDESHOW_IMAGES[prevSlideIndex]})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center 38%",
+                WebkitBackgroundClip: "text",
+                backgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                color: "transparent",
+              }}
+            >
+              studio
+            </div>
+
+            {/* Fading in slide */}
+            {isTransitioning && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1.2, ease: "easeInOut" }}
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  ...wordmarkFontStyle,
+                  backgroundImage: `url(${process.env.PUBLIC_URL + FOOTER_SLIDESHOW_IMAGES[slideIndex]})`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center 38%",
+                  WebkitBackgroundClip: "text",
+                  backgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  color: "transparent",
+                }}
+              >
+                studio
+              </motion.div>
+            )}
+
+            {/* Architectural crisp stroke overlay */}
+            <div
+              aria-hidden="true"
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                pointerEvents: "none",
+                ...wordmarkFontStyle,
+                color: "transparent",
+                WebkitTextStroke: "1.5px rgba(13, 13, 13, 0.32)",
+              }}
+            >
+              studio
+            </div>
+          </div>
+
+          {/* "91" in Electric Chartreuse (#C8FF00) brand book green */}
+          <span
+            style={{
+              ...wordmarkFontStyle,
+              color: "var(--accent)",
+              WebkitTextStroke: "1.5px rgba(13, 13, 13, 0.32)",
+              textShadow: "0 0 35px rgba(200, 255, 0, 0.35)",
+              display: "inline-block",
+            }}
+          >
+            91
+          </span>
+        </div>
+      </div>
     </footer>
   );
 }
@@ -1749,9 +2129,8 @@ export default function Studio91() {
         <Apps />
         <Campaigns />
         <Team />
-        <Contact />
-        <Footer />
       </main>
+      <Footer />
     </>
   );
 }
