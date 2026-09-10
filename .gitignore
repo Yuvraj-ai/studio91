@@ -21,3 +21,8 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# Brand assets & reference documents
+*.pdf
+studio91_brand_book_by_pomelli-2.pdf
+
