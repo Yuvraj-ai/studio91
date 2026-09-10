@@ -682,25 +682,20 @@ function Nav({ active }) {
           style={{
             display: "flex",
             alignItems: "center",
-            gap: 10,
             textDecoration: "none",
             flexShrink: 0,
           }}
         >
           <img
             src={process.env.PUBLIC_URL + BRAND.logo}
-            alt="Studio91 Emblem"
+            alt="Studio91"
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
+              height: 28,
+              width: "auto",
+              display: "block",
               objectFit: "contain",
-              boxShadow: "0 2px 8px rgba(13,13,13,0.08)",
             }}
           />
-          <span style={{ fontFamily: "var(--serif)", fontSize: 20, letterSpacing: "-0.02em", fontWeight: 400 }}>
-            Studio<span style={{ color: "var(--accent-dark)" }}>91</span>
-          </span>
         </a>
 
         {/* Desktop nav */}
@@ -770,15 +765,12 @@ function Nav({ active }) {
             >
               ✕
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <div style={{ marginBottom: 12 }}>
               <img
                 src={process.env.PUBLIC_URL + BRAND.logo}
-                alt="Studio91 Logo"
-                style={{ width: 36, height: 36, borderRadius: 8 }}
+                alt="Studio91"
+                style={{ height: 32, width: "auto", display: "block" }}
               />
-              <span style={{ fontFamily: "var(--serif)", fontSize: 24 }}>
-                Studio<span style={{ color: "var(--accent-dark)" }}>91</span>
-              </span>
             </div>
             {links.map((l) => (
               <a
@@ -1673,16 +1665,13 @@ function Footer() {
         flexWrap: "wrap", gap: 18,
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+      <a href="#home" aria-label="Studio91 home" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
         <img
           src={process.env.PUBLIC_URL + BRAND.logo}
-          alt="Studio91 Emblem"
-          style={{ width: 24, height: 24, borderRadius: 6, objectFit: "contain" }}
+          alt="Studio91"
+          style={{ height: 22, width: "auto", display: "block" }}
         />
-        <span style={{ fontFamily: "var(--serif)", fontSize: 18, letterSpacing: "-0.01em" }}>
-          Studio<span style={{ color: "var(--accent-dark)" }}>91</span>
-        </span>
-      </div>
+      </a>
       <span style={{ fontSize: 10, color: "var(--ink-muted)", letterSpacing: "0.1em" }}>
         © 2025 Studio91 · Jaipur, Rajasthan, India
       </span>
