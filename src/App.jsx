@@ -137,6 +137,16 @@ const CAMPAIGNS = [
   },
 ];
 
+const ALL_CREATIVES = CAMPAIGNS.flatMap((c) =>
+  c.creatives.map((item) => ({
+    ...item,
+    campaignId: c.id,
+    campaignLabel: c.label,
+    campaignTitle: c.title,
+    campaignDesc: c.description,
+  }))
+);
+
 /* ─── EMAILJS CONFIG ──────────────────────────────────────────────────────── */
 const EMAILJS_SERVICE_ID = "service_ozzpa1d";
 const EMAILJS_TEMPLATE_ID = "template_uy9h0yi";
@@ -379,29 +389,6 @@ const css = `
     z-index: 2;
   }
 
-  /* ── Filter button ── */
-  .filter-btn {
-    padding: 9px 20px;
-    border-radius: var(--radius-pill);
-    font-size: 11px;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    font-family: var(--mono);
-    cursor: pointer;
-    border: 1px solid transparent;
-    transition: all 0.25s;
-    background: transparent;
-    color: var(--ink-muted);
-  }
-  .filter-btn:hover {
-    color: var(--ink);
-    border-color: var(--rule-strong);
-  }
-  .filter-btn.active {
-    background: var(--ink);
-    color: var(--bg);
-    box-shadow: 0 4px 14px rgba(13,13,13,0.15);
-  }
 
   /* ── Form card specific ── */
   .contact-card {
@@ -1082,7 +1069,6 @@ function Apps() {
 
 /* ─── CAMPAIGNS & CREATIVES SECTION ───────────────────────────────────────── */
 function Campaigns() {
-  const [selectedFilter, setSelectedFilter] = useState("all");
   const [activeCreative, setActiveCreative] = useState(null);
   const [isHovered, setIsHovered] = useState(false);
   const [isManualPaused, setIsManualPaused] = useState(false);
@@ -1093,47 +1079,11 @@ function Campaigns() {
   const scrollLeftRef = useRef(0);
   const dragMovedRef = useRef(false);
 
-  const allCreatives = useMemo(
-    () =>
-      CAMPAIGNS.flatMap((c) =>
-        c.creatives.map((item) => ({
-          ...item,
-          campaignId: c.id,
-          campaignLabel: c.label,
-          campaignTitle: c.title,
-          campaignDesc: c.description,
-        }))
-      ),
+  // Duplicate items for continuous seamless loop
+  const displayList = useMemo(
+    () => [...ALL_CREATIVES, ...ALL_CREATIVES],
     []
   );
-
-  const filteredCreatives = useMemo(
-    () =>
-      selectedFilter === "all"
-        ? allCreatives
-        : allCreatives.filter((c) => c.campaignId === selectedFilter),
-    [allCreatives, selectedFilter]
-  );
-
-  const currentCampaign = useMemo(
-    () => CAMPAIGNS.find((c) => c.id === selectedFilter),
-    [selectedFilter]
-  );
-
-  // Duplicate items for continuous seamless loop
-  const displayList = useMemo(() => {
-    const count = filteredCreatives.length;
-    if (count === 0) return [];
-    const repeatCount = Math.max(2, Math.ceil(16 / count));
-    return Array.from({ length: repeatCount }, () => filteredCreatives).flat();
-  }, [filteredCreatives]);
-
-  // Reset scroll on filter change
-  useEffect(() => {
-    if (sliderRef.current) {
-      sliderRef.current.scrollLeft = 0;
-    }
-  }, [selectedFilter]);
 
   // Smooth continuous horizontal sliding animation loop
   useEffect(() => {
@@ -1166,23 +1116,23 @@ function Campaigns() {
 
     rafId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(rafId);
-  }, [isHovered, isManualPaused, displayList]);
+  }, [isHovered, isManualPaused]);
 
   const handleOpen = (item) => setActiveCreative(item);
   const handleClose = () => setActiveCreative(null);
 
   const handlePrev = () => {
     if (!activeCreative) return;
-    const currentIndex = filteredCreatives.findIndex((c) => c.id === activeCreative.id);
-    const prevIndex = (currentIndex - 1 + filteredCreatives.length) % filteredCreatives.length;
-    setActiveCreative(filteredCreatives[prevIndex]);
+    const currentIndex = ALL_CREATIVES.findIndex((c) => c.id === activeCreative.id);
+    const prevIndex = (currentIndex - 1 + ALL_CREATIVES.length) % ALL_CREATIVES.length;
+    setActiveCreative(ALL_CREATIVES[prevIndex]);
   };
 
   const handleNext = () => {
     if (!activeCreative) return;
-    const currentIndex = filteredCreatives.findIndex((c) => c.id === activeCreative.id);
-    const nextIndex = (currentIndex + 1) % filteredCreatives.length;
-    setActiveCreative(filteredCreatives[nextIndex]);
+    const currentIndex = ALL_CREATIVES.findIndex((c) => c.id === activeCreative.id);
+    const nextIndex = (currentIndex + 1) % ALL_CREATIVES.length;
+    setActiveCreative(ALL_CREATIVES[nextIndex]);
   };
 
   const scrollByAmount = (offset) => {
@@ -1220,156 +1170,93 @@ function Campaigns() {
       <hr className="hr" style={{ marginBottom: "clamp(36px,7vw,80px)" }} />
 
       <FadeIn>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: "clamp(24px,4vw,40px)" }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-end",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 20,
+            marginBottom: "clamp(24px,4vw,36px)",
+          }}
+        >
           <div>
             <div className="pill" style={{ marginBottom: 14 }}>Campaigns</div>
             <h2 id="campaigns-heading" style={{ fontFamily: "var(--serif)", fontSize: "clamp(28px,4vw,50px)", fontWeight: 400, letterSpacing: "-0.02em", lineHeight: 1.06 }}>
               Visual narratives of<br /><em>quiet restraint.</em>
             </h2>
           </div>
-          <p style={{ fontSize: "clamp(13px,1.4vw,14px)", color: "var(--ink-muted)", maxWidth: 440, lineHeight: 1.7, fontFamily: "var(--sans)" }}>
-            Explore editorial posters and brand expressions crafted around digital wellness, human-centered AI, and the beauty of peaceful interfaces.
-          </p>
-        </div>
-      </FadeIn>
 
-      {/* Filter Tabs & Slide Controls */}
-      <FadeIn delay={0.1}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
-            gap: 16,
-            marginBottom: 20,
-          }}
-        >
-          {/* Filter Tabs */}
-          <div
-            style={{
-              display: "flex",
-              gap: 8,
-              flexWrap: "wrap",
-              alignItems: "center",
-              padding: "6px 10px",
-              background: "rgba(255,255,255,0.45)",
-              border: "1px solid rgba(255,255,255,0.65)",
-              borderRadius: 999,
-              backdropFilter: "blur(12px)",
-              WebkitBackdropFilter: "blur(12px)",
-            }}
-            role="tablist"
-            aria-label="Filter campaigns"
-          >
-            <button
-              role="tab"
-              aria-selected={selectedFilter === "all"}
-              className={`filter-btn ${selectedFilter === "all" ? "active" : ""}`}
-              onClick={() => setSelectedFilter("all")}
-            >
-              All Works ({allCreatives.length})
-            </button>
-            {CAMPAIGNS.map((c) => (
-              <button
-                key={c.id}
-                role="tab"
-                aria-selected={selectedFilter === c.id}
-                className={`filter-btn ${selectedFilter === c.id ? "active" : ""}`}
-                onClick={() => setSelectedFilter(c.id)}
-              >
-                {c.label}
-              </button>
-            ))}
-          </div>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 14, maxWidth: 440 }}>
+            <p style={{ fontSize: "clamp(13px,1.4vw,14px)", color: "var(--ink-muted)", lineHeight: 1.7, fontFamily: "var(--sans)", margin: 0, textAlign: "right" }}>
+              Explore editorial posters and brand expressions crafted around digital wellness, human-centered AI, and the beauty of peaceful interfaces.
+            </p>
 
-          {/* Slider Controls */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <span
-              style={{
-                fontSize: 10,
-                color: "var(--ink-muted)",
-                letterSpacing: "0.12em",
-                textTransform: "uppercase",
-                fontFamily: "var(--mono)",
-              }}
-              className="nav-desktop"
-            >
-              {filteredCreatives.length} works · Drag or click to preview
-            </span>
-            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-              <motion.button
-                onClick={() => scrollByAmount(-280)}
-                aria-label="Slide left"
-                whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+            {/* Slider Controls */}
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+              <span
                 style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  border: "1px solid var(--rule-strong)", background: "rgba(255,255,255,0.65)",
-                  color: "var(--ink)", fontSize: 16, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s", fontFamily: "var(--mono)",
-                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                  fontSize: 10,
+                  color: "var(--ink-muted)",
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  fontFamily: "var(--mono)",
                 }}
               >
-                ‹
-              </motion.button>
-              <motion.button
-                onClick={() => setIsManualPaused((p) => !p)}
-                aria-label={isManualPaused ? "Resume auto-scroll" : "Pause auto-scroll"}
-                whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
-                style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  border: "1px solid var(--rule-strong)",
-                  background: isManualPaused ? "var(--ink)" : "rgba(255,255,255,0.65)",
-                  color: isManualPaused ? "var(--bg)" : "var(--ink)",
-                  fontSize: 10, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s", fontFamily: "var(--mono)",
-                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                }}
-              >
-                {isManualPaused ? "▶" : "❚❚"}
-              </motion.button>
-              <motion.button
-                onClick={() => scrollByAmount(280)}
-                aria-label="Slide right"
-                whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
-                style={{
-                  width: 34, height: 34, borderRadius: "50%",
-                  border: "1px solid var(--rule-strong)", background: "rgba(255,255,255,0.65)",
-                  color: "var(--ink)", fontSize: 16, cursor: "pointer",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  transition: "all 0.2s", fontFamily: "var(--mono)",
-                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
-                }}
-              >
-                ›
-              </motion.button>
+                {ALL_CREATIVES.length} works · Drag or click to preview
+              </span>
+              <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                <motion.button
+                  onClick={() => scrollByAmount(-280)}
+                  aria-label="Slide left"
+                  whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+                  style={{
+                    width: 34, height: 34, borderRadius: "50%",
+                    border: "1px solid var(--rule-strong)", background: "rgba(255,255,255,0.65)",
+                    color: "var(--ink)", fontSize: 16, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s", fontFamily: "var(--mono)",
+                    backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                  }}
+                >
+                  ‹
+                </motion.button>
+                <motion.button
+                  onClick={() => setIsManualPaused((p) => !p)}
+                  aria-label={isManualPaused ? "Resume auto-scroll" : "Pause auto-scroll"}
+                  whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+                  style={{
+                    width: 34, height: 34, borderRadius: "50%",
+                    border: "1px solid var(--rule-strong)",
+                    background: isManualPaused ? "var(--ink)" : "rgba(255,255,255,0.65)",
+                    color: isManualPaused ? "var(--bg)" : "var(--ink)",
+                    fontSize: 10, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s", fontFamily: "var(--mono)",
+                    backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                  }}
+                >
+                  {isManualPaused ? "▶" : "❚❚"}
+                </motion.button>
+                <motion.button
+                  onClick={() => scrollByAmount(280)}
+                  aria-label="Slide right"
+                  whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+                  style={{
+                    width: 34, height: 34, borderRadius: "50%",
+                    border: "1px solid var(--rule-strong)", background: "rgba(255,255,255,0.65)",
+                    color: "var(--ink)", fontSize: 16, cursor: "pointer",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    transition: "all 0.2s", fontFamily: "var(--mono)",
+                    backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                  }}
+                >
+                  ›
+                </motion.button>
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Selected Campaign Context Banner */}
-        {currentCampaign && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass"
-            style={{
-              padding: "16px 22px",
-              marginBottom: 24,
-              borderRadius: 14,
-              borderLeft: "3px solid var(--accent-dark)",
-            }}
-          >
-            <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--ink-muted)", fontFamily: "var(--mono)", display: "block", marginBottom: 4 }}>
-              {currentCampaign.title}
-            </span>
-            <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--ink-mid)", fontFamily: "var(--sans)", margin: 0 }}>
-              {currentCampaign.description}
-            </p>
-          </motion.div>
-        )}
       </FadeIn>
 
       {/* ── Single Row Animated Sliding Cards ── */}
