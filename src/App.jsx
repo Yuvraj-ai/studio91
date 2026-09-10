@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 /* ─── DATA & CONSTANTS ────────────────────────────────────────────────────── */
@@ -302,57 +302,79 @@ const css = `
   .nav-link:hover::after, .nav-link.active::after { width: 100%; }
   .nav-link.active { color: var(--ink); }
 
-  /* ── Creative poster card ── */
-  .creative-card {
+  /* ── Creative slider & cards ── */
+  .creative-slider-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    padding: 12px 0 24px;
+    margin: 0 -8px;
+    mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 3%, black 97%, transparent 100%);
+  }
+  .creative-slider-track {
+    display: flex;
+    gap: 20px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 10px 24px 18px;
+    cursor: grab;
+    user-select: none;
+    -webkit-user-select: none;
+    scroll-behavior: auto;
+  }
+  .creative-slider-track:active {
+    cursor: grabbing;
+  }
+  .creative-slider-track::-webkit-scrollbar {
+    display: none;
+  }
+  .creative-slide-card {
+    flex: 0 0 clamp(220px, 22vw, 265px);
+    height: clamp(340px, 42vh, 395px);
     position: relative;
     border-radius: 18px;
     overflow: hidden;
     background: #EAE6DD;
     border: 1px solid rgba(255,255,255,0.7);
     box-shadow: var(--glass-shadow);
-    transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     cursor: pointer;
+    transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     display: flex;
     flex-direction: column;
   }
-  .creative-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 24px 60px rgba(13,13,13,0.14), inset 0 1px 0 rgba(255,255,255,1);
+  .creative-slide-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 22px 50px rgba(13,13,13,0.16), inset 0 1px 0 rgba(255,255,255,0.9);
   }
-  .creative-img-wrap {
-    position: relative;
-    width: 100%;
-    aspect-ratio: 9 / 16;
-    overflow: hidden;
-    background: #111;
+  .creative-slide-card:hover .slide-img {
+    transform: scale(1.045);
   }
-  .creative-img {
+  .slide-img {
     width: 100%;
     height: 100%;
     object-fit: cover;
     display: block;
-    transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s;
-  }
-  .creative-card:hover .creative-img {
-    transform: scale(1.035);
-  }
-  .creative-overlay {
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(180deg, rgba(13,13,0,0.02) 40%, rgba(13,13,13,0.85) 100%);
-    opacity: 0.88;
-    transition: opacity 0.3s;
+    transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
     pointer-events: none;
   }
-  .creative-card:hover .creative-overlay {
-    opacity: 0.94;
+  .slide-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(13,13,0,0.02) 40%, rgba(13,13,13,0.88) 100%);
+    pointer-events: none;
+    transition: background 0.3s;
   }
-  .creative-meta {
+  .creative-slide-card:hover .slide-overlay {
+    background: linear-gradient(180deg, rgba(13,13,0,0.02) 30%, rgba(13,13,13,0.94) 100%);
+  }
+  .slide-meta {
     position: absolute;
     bottom: 0;
     left: 0;
     right: 0;
-    padding: 22px 20px;
+    padding: 20px 18px;
     color: var(--bg);
     z-index: 2;
   }
@@ -1062,23 +1084,89 @@ function Apps() {
 function Campaigns() {
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [activeCreative, setActiveCreative] = useState(null);
+  const [isHovered, setIsHovered] = useState(false);
+  const [isManualPaused, setIsManualPaused] = useState(false);
+  const sliderRef = useRef(null);
 
-  const allCreatives = CAMPAIGNS.flatMap((c) =>
-    c.creatives.map((item) => ({
-      ...item,
-      campaignId: c.id,
-      campaignLabel: c.label,
-      campaignTitle: c.title,
-      campaignDesc: c.description,
-    }))
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const scrollLeftRef = useRef(0);
+  const dragMovedRef = useRef(false);
+
+  const allCreatives = useMemo(
+    () =>
+      CAMPAIGNS.flatMap((c) =>
+        c.creatives.map((item) => ({
+          ...item,
+          campaignId: c.id,
+          campaignLabel: c.label,
+          campaignTitle: c.title,
+          campaignDesc: c.description,
+        }))
+      ),
+    []
   );
 
-  const filteredCreatives =
-    selectedFilter === "all"
-      ? allCreatives
-      : allCreatives.filter((c) => c.campaignId === selectedFilter);
+  const filteredCreatives = useMemo(
+    () =>
+      selectedFilter === "all"
+        ? allCreatives
+        : allCreatives.filter((c) => c.campaignId === selectedFilter),
+    [allCreatives, selectedFilter]
+  );
 
-  const currentCampaign = CAMPAIGNS.find((c) => c.id === selectedFilter);
+  const currentCampaign = useMemo(
+    () => CAMPAIGNS.find((c) => c.id === selectedFilter),
+    [selectedFilter]
+  );
+
+  // Duplicate items for continuous seamless loop
+  const displayList = useMemo(() => {
+    const count = filteredCreatives.length;
+    if (count === 0) return [];
+    const repeatCount = Math.max(2, Math.ceil(16 / count));
+    return Array.from({ length: repeatCount }, () => filteredCreatives).flat();
+  }, [filteredCreatives]);
+
+  // Reset scroll on filter change
+  useEffect(() => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollLeft = 0;
+    }
+  }, [selectedFilter]);
+
+  // Smooth continuous horizontal sliding animation loop
+  useEffect(() => {
+    const el = sliderRef.current;
+    if (!el) return;
+    if (typeof window !== "undefined" && window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      return;
+    }
+
+    let rafId;
+    let lastTime = performance.now();
+    const speed = 0.55;
+
+    const step = (now) => {
+      const dt = Math.min(now - lastTime, 50);
+      lastTime = now;
+
+      if (!isHovered && !isManualPaused && !isDraggingRef.current && el) {
+        el.scrollLeft += speed * (dt / 16.67);
+        const half = el.scrollWidth / 2;
+        if (el.scrollLeft >= half) {
+          el.scrollLeft -= half;
+        }
+        if (el.scrollLeft <= 0) {
+          el.scrollLeft += half;
+        }
+      }
+      rafId = requestAnimationFrame(step);
+    };
+
+    rafId = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(rafId);
+  }, [isHovered, isManualPaused, displayList]);
 
   const handleOpen = (item) => setActiveCreative(item);
   const handleClose = () => setActiveCreative(null);
@@ -1097,12 +1185,42 @@ function Campaigns() {
     setActiveCreative(filteredCreatives[nextIndex]);
   };
 
+  const scrollByAmount = (offset) => {
+    if (sliderRef.current) {
+      sliderRef.current.scrollBy({ left: offset, behavior: "smooth" });
+    }
+  };
+
+  const handleMouseDown = (e) => {
+    isDraggingRef.current = true;
+    dragMovedRef.current = false;
+    startXRef.current = e.pageX - (sliderRef.current ? sliderRef.current.offsetLeft : 0);
+    scrollLeftRef.current = sliderRef.current ? sliderRef.current.scrollLeft : 0;
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDraggingRef.current || !sliderRef.current) return;
+    const x = e.pageX - sliderRef.current.offsetLeft;
+    const walk = x - startXRef.current;
+    if (Math.abs(walk) > 5) dragMovedRef.current = true;
+    sliderRef.current.scrollLeft = scrollLeftRef.current - walk;
+  };
+
+  const handleMouseUp = () => {
+    isDraggingRef.current = false;
+  };
+
+  const handleCardClick = (item) => {
+    if (dragMovedRef.current) return;
+    handleOpen(item);
+  };
+
   return (
     <section id="campaigns" className="section" aria-labelledby="campaigns-heading">
       <hr className="hr" style={{ marginBottom: "clamp(36px,7vw,80px)" }} />
 
       <FadeIn>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: "clamp(24px,4vw,44px)" }}>
+        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 16, marginBottom: "clamp(24px,4vw,40px)" }}>
           <div>
             <div className="pill" style={{ marginBottom: 14 }}>Campaigns</div>
             <h2 id="campaigns-heading" style={{ fontFamily: "var(--serif)", fontSize: "clamp(28px,4vw,50px)", fontWeight: 400, letterSpacing: "-0.02em", lineHeight: 1.06 }}>
@@ -1115,44 +1233,120 @@ function Campaigns() {
         </div>
       </FadeIn>
 
-      {/* Filter Tabs */}
+      {/* Filter Tabs & Slide Controls */}
       <FadeIn delay={0.1}>
         <div
           style={{
             display: "flex",
-            gap: 8,
-            flexWrap: "wrap",
             alignItems: "center",
-            marginBottom: 28,
-            padding: "8px 12px",
-            background: "rgba(255,255,255,0.45)",
-            border: "1px solid rgba(255,255,255,0.65)",
-            borderRadius: 999,
-            width: "fit-content",
-            backdropFilter: "blur(12px)",
+            justifyContent: "space-between",
+            flexWrap: "wrap",
+            gap: 16,
+            marginBottom: 20,
           }}
-          role="tablist"
-          aria-label="Filter campaigns"
         >
-          <button
-            role="tab"
-            aria-selected={selectedFilter === "all"}
-            className={`filter-btn ${selectedFilter === "all" ? "active" : ""}`}
-            onClick={() => setSelectedFilter("all")}
+          {/* Filter Tabs */}
+          <div
+            style={{
+              display: "flex",
+              gap: 8,
+              flexWrap: "wrap",
+              alignItems: "center",
+              padding: "6px 10px",
+              background: "rgba(255,255,255,0.45)",
+              border: "1px solid rgba(255,255,255,0.65)",
+              borderRadius: 999,
+              backdropFilter: "blur(12px)",
+              WebkitBackdropFilter: "blur(12px)",
+            }}
+            role="tablist"
+            aria-label="Filter campaigns"
           >
-            All Works ({allCreatives.length})
-          </button>
-          {CAMPAIGNS.map((c) => (
             <button
-              key={c.id}
               role="tab"
-              aria-selected={selectedFilter === c.id}
-              className={`filter-btn ${selectedFilter === c.id ? "active" : ""}`}
-              onClick={() => setSelectedFilter(c.id)}
+              aria-selected={selectedFilter === "all"}
+              className={`filter-btn ${selectedFilter === "all" ? "active" : ""}`}
+              onClick={() => setSelectedFilter("all")}
             >
-              {c.label}
+              All Works ({allCreatives.length})
             </button>
-          ))}
+            {CAMPAIGNS.map((c) => (
+              <button
+                key={c.id}
+                role="tab"
+                aria-selected={selectedFilter === c.id}
+                className={`filter-btn ${selectedFilter === c.id ? "active" : ""}`}
+                onClick={() => setSelectedFilter(c.id)}
+              >
+                {c.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Slider Controls */}
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <span
+              style={{
+                fontSize: 10,
+                color: "var(--ink-muted)",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                fontFamily: "var(--mono)",
+              }}
+              className="nav-desktop"
+            >
+              {filteredCreatives.length} works · Drag or click to preview
+            </span>
+            <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+              <motion.button
+                onClick={() => scrollByAmount(-280)}
+                aria-label="Slide left"
+                whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+                style={{
+                  width: 34, height: 34, borderRadius: "50%",
+                  border: "1px solid var(--rule-strong)", background: "rgba(255,255,255,0.65)",
+                  color: "var(--ink)", fontSize: 16, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s", fontFamily: "var(--mono)",
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                }}
+              >
+                ‹
+              </motion.button>
+              <motion.button
+                onClick={() => setIsManualPaused((p) => !p)}
+                aria-label={isManualPaused ? "Resume auto-scroll" : "Pause auto-scroll"}
+                whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+                style={{
+                  width: 34, height: 34, borderRadius: "50%",
+                  border: "1px solid var(--rule-strong)",
+                  background: isManualPaused ? "var(--ink)" : "rgba(255,255,255,0.65)",
+                  color: isManualPaused ? "var(--bg)" : "var(--ink)",
+                  fontSize: 10, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s", fontFamily: "var(--mono)",
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                }}
+              >
+                {isManualPaused ? "▶" : "❚❚"}
+              </motion.button>
+              <motion.button
+                onClick={() => scrollByAmount(280)}
+                aria-label="Slide right"
+                whileHover={{ backgroundColor: "var(--ink)", color: "var(--bg)", borderColor: "var(--ink)" }}
+                style={{
+                  width: 34, height: 34, borderRadius: "50%",
+                  border: "1px solid var(--rule-strong)", background: "rgba(255,255,255,0.65)",
+                  color: "var(--ink)", fontSize: 16, cursor: "pointer",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  transition: "all 0.2s", fontFamily: "var(--mono)",
+                  backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+                }}
+              >
+                ›
+              </motion.button>
+            </div>
+          </div>
         </div>
 
         {/* Selected Campaign Context Banner */}
@@ -1162,75 +1356,88 @@ function Campaigns() {
             animate={{ opacity: 1, y: 0 }}
             className="glass"
             style={{
-              padding: "18px 24px",
-              marginBottom: 36,
+              padding: "16px 22px",
+              marginBottom: 24,
               borderRadius: 14,
               borderLeft: "3px solid var(--accent-dark)",
             }}
           >
-            <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--ink-muted)", fontFamily: "var(--mono)", display: "block", marginBottom: 6 }}>
-              Campaign Premise
+            <span style={{ fontSize: 9, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--ink-muted)", fontFamily: "var(--mono)", display: "block", marginBottom: 4 }}>
+              {currentCampaign.title}
             </span>
-            <p style={{ fontSize: 13, lineHeight: 1.7, color: "var(--ink-mid)", fontFamily: "var(--sans)" }}>
+            <p style={{ fontSize: 12.5, lineHeight: 1.65, color: "var(--ink-mid)", fontFamily: "var(--sans)", margin: 0 }}>
               {currentCampaign.description}
             </p>
           </motion.div>
         )}
       </FadeIn>
 
-      {/* Creatives Grid */}
-      <motion.div
-        layout
-        style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
-          gap: "clamp(20px, 3vw, 32px)",
-        }}
+      {/* ── Single Row Animated Sliding Cards ── */}
+      <div
+        className="creative-slider-wrapper"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => { setIsHovered(false); isDraggingRef.current = false; }}
+        onTouchStart={() => setIsHovered(true)}
+        onTouchEnd={() => setIsHovered(false)}
       >
-        <AnimatePresence>
-          {filteredCreatives.map((item, i) => (
-            <motion.div
-              layout
-              key={item.id}
-              initial={{ opacity: 0, scale: 0.94 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.94 }}
-              transition={{ duration: 0.35, delay: i * 0.05 }}
-              className="creative-card"
-              onClick={() => handleOpen(item)}
+        <div
+          ref={sliderRef}
+          className="creative-slider-track"
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          role="region"
+          aria-label="Campaign cards slider"
+        >
+          {displayList.map((item, idx) => (
+            <div
+              key={`${item.id}-${idx}`}
+              className="creative-slide-card"
+              onClick={() => handleCardClick(item)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && handleOpen(item)}
               aria-label={`View ${item.title}`}
             >
-              <div className="creative-img-wrap">
-                <img
-                  src={`${process.env.PUBLIC_URL}/creatives/${item.fileName}`}
-                  alt={item.title}
-                  loading="lazy"
-                  className="creative-img"
-                />
-                <div className="creative-overlay" />
-                <div className="creative-meta">
-                  <span style={{
+              <img
+                src={`${process.env.PUBLIC_URL}/creatives/${item.fileName}`}
+                alt={item.title}
+                loading="lazy"
+                draggable={false}
+                className="slide-img"
+              />
+              <div className="slide-overlay" />
+              <div className="slide-meta">
+                <span
+                  style={{
                     display: "inline-block",
-                    fontSize: 9, letterSpacing: "0.14em", textTransform: "uppercase",
-                    color: "var(--accent)", marginBottom: 6, fontFamily: "var(--mono)"
-                  }}>
-                    {item.subtitle}
-                  </span>
-                  <h3 style={{
-                    fontFamily: "var(--serif)", fontSize: "clamp(18px,2vw,22px)",
-                    fontWeight: 400, letterSpacing: "-0.015em", lineHeight: 1.15,
-                  }}>
-                    {item.title}
-                  </h3>
-                </div>
+                    fontSize: 9,
+                    letterSpacing: "0.14em",
+                    textTransform: "uppercase",
+                    color: "var(--accent)",
+                    marginBottom: 5,
+                    fontFamily: "var(--mono)",
+                  }}
+                >
+                  {item.subtitle}
+                </span>
+                <h3
+                  style={{
+                    fontFamily: "var(--serif)",
+                    fontSize: "clamp(16px, 1.8vw, 19px)",
+                    fontWeight: 400,
+                    letterSpacing: "-0.015em",
+                    lineHeight: 1.18,
+                    margin: 0,
+                  }}
+                >
+                  {item.title}
+                </h3>
               </div>
-            </motion.div>
+            </div>
           ))}
-        </AnimatePresence>
-      </motion.div>
+        </div>
+      </div>
 
       {/* Lightbox Modal */}
       <AnimatePresence>
