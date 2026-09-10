@@ -25,7 +25,7 @@ describe('Studio91 Application', () => {
     expect(screen.getByText(/Less noise\. More clarity\./i)).toBeInTheDocument();
 
     // Founding team
-    expect(screen.getByText('Rahul Sharma')).toBeInTheDocument();
+    expect(screen.getByText('Yuvraj Singh')).toBeInTheDocument();
     expect(screen.getByText('Virendra Chaudhary')).toBeInTheDocument();
   });
 

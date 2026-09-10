@@ -13,7 +13,7 @@
 - **Color Tokens:** Classic Linen (`#F5F2EC`), Jet Black (`#0D0D0D`), Electric Chartreuse (`#C8FF00`).
 
 ## Team
-- **Rahul Sharma:** Co-founder / Developer / Product & Engineering
+- **Yuvraj Singh:** Co-founder / Developer / Product & Engineering
 - **Virendra Chaudhary:** Co-founder / Developer / React Native & Frontend
 
 ## Tech Stack
@@ -54,7 +54,7 @@ studio91/
 - **About:** Three core studio principles (Humanistic Minimalism, Spacious Restraint, Intentional Warmth).
 - **Apps:** Showcase for studio products, highlighting "Slow" (Mindfulness & breathing app).
 - **Campaigns:** Editorial creative gallery featuring 12 posters across 3 campaigns with filter tabs and full-screen lightbox modal with keyboard navigation.
-- **Team:** Cards for Rahul Sharma and Virendra Chaudhary.
+- **Team:** Cards for Yuvraj Singh and Virendra Chaudhary.
 - **Contact:** Glassmorphic contact form with client-side validation and EmailJS dispatch.
 - **Footer:** Logo, copyright, city attribution, live link, and social links.
 

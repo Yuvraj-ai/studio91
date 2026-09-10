@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 
 const TEAM = [
-  { name: "Rahul Sharma", role: "Co-founder · Chief Executive Officer", avatar: "RS", color: "#00ff9f" },
+  { name: "Yuvraj Singh", role: "Co-founder · Chief Executive Officer", avatar: "YS", color: "#00ff9f" },
   { name: "Virendra Chaudhary", role: "Co-founder · React Native Dev", avatar: "VC", color: "#00cfff" },
 ];
 

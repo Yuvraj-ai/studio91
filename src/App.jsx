@@ -48,9 +48,9 @@ const BRAND = {
 
 const TEAM = [
   {
-    name: "Rahul Sharma",
+    name: "Yuvraj Singh",
     role: "Product & Engineering",
-    initials: "RS",
+    initials: "YS",
     intro:
       "Drives product direction and engineering decisions, pioneering human-centered AI that turns speech into seamless workflows.",
   },
@@ -911,17 +911,6 @@ function Hero() {
         </div>
       </motion.div>
 
-      <FadeIn delay={0.05}>
-        <div className="pill-glass" style={{ marginBottom: 26, width: "fit-content" }}>
-          <img
-            src={process.env.PUBLIC_URL + BRAND.logo}
-            alt=""
-            style={{ width: 16, height: 16, borderRadius: 3, objectFit: "contain" }}
-          />
-          <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#4ADE80", display: "inline-block" }} />
-          Human-Centered AI & Digital Product Studio
-        </div>
-      </FadeIn>
 
       <FadeIn delay={0.17}>
         <h1 style={{
@@ -1656,7 +1645,7 @@ function Contact() {
                           type="text"
                           value={form.name}
                           onChange={update}
-                          placeholder="Rahul Sharma"
+                          placeholder="Yuvraj Singh"
                           autoComplete="name"
                           aria-required="true"
                           aria-invalid={!!errors.name}

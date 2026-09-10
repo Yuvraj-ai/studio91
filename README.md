@@ -78,7 +78,7 @@ Studio91 produces visual narratives celebrating quiet restraint, digital wellnes
 
 | Name | Role | Focus |
 | :--- | :--- | :--- |
-| **Rahul Sharma** | Co-founder · Product & Engineering | Product architecture, technical direction, and high-impact digital experiences. |
+| **Yuvraj Singh** | Co-founder · Product & Engineering | Product architecture, technical direction, and high-impact digital experiences. |
 | **Virendra Chaudhary** | Co-founder · Frontend & Mobile | Minimal UI engineering, cross-platform React Native, and design refinement. |
 
 ---
