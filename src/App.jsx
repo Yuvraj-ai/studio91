@@ -1507,14 +1507,13 @@ function Team() {
 // The hollow "studio" bottom wordmark cycles through these images.
 // You can replace or add custom image paths here anytime:
 export const FOOTER_SLIDESHOW_IMAGES = [
-  "/creatives/deliberate_restraint_1.png",
-  "/creatives/mental_health_day_1.png",
-  "/creatives/digital_wellness_1.png",
-  "/creatives/deliberate_restraint_2.png",
-  "/creatives/mental_health_day_2.png",
-  "/creatives/digital_wellness_2.png",
-  "/creatives/deliberate_restraint_3.png",
-  "/creatives/deliberate_restraint_4.png",
+  "/behind/claudio-testa--SO3JtE3gZo-unsplash.jpg",
+  "/behind/jaanus-jagomagi-7aTrthCFBiU-unsplash.jpg",
+  "/behind/mimipic-photography-XmR3y0bp3Kw-unsplash.jpg",
+  "/behind/mulyadi-kIYH9ja6HhY-unsplash.jpg",
+  "/behind/peakpx.jpg",
+  "/behind/restu-kurnia-oPZih_dRKvQ-unsplash.jpg",
+  "/behind/teemu-paananen-OOE4xAnBhKo-unsplash.jpg",
 ];
 
 /* ─── FOOTER & CONTACT ────────────────────────────────────────────────────── */
@@ -1995,13 +1994,13 @@ function Footer() {
           marginBottom: "-0.04em",
           display: "flex",
           alignItems: "baseline",
-          justifyContent: "space-between",
+          justifyContent: "center",
           cursor: "pointer",
         }}
         onClick={advanceSlide}
         title="Click to cycle slideshow visuals"
       >
-        <div style={{ display: "flex", alignItems: "baseline", gap: "clamp(4px, 1.2vw, 18px)", width: "100%" }}>
+        <div style={{ display: "inline-flex", alignItems: "baseline", justifyContent: "center", gap: "clamp(4px, 1.2vw, 18px)", textAlign: "center" }}>
           {/* Hollow "studio" with interior photo slideshow */}
           <div style={{ position: "relative", display: "inline-block" }}>
             {/* Base slide */}
