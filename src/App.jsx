@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 /* ─── DATA & CONSTANTS ────────────────────────────────────────────────────── */
 const BRAND = {
@@ -597,6 +597,106 @@ const css = `
     color: var(--ink-muted);
   }
 
+  /* ── Hero section responsive layout ── */
+  .hero-section {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 96px clamp(20px, 5vw, 56px) clamp(54px, 8vw, 96px);
+    position: relative;
+  }
+  @media (max-width: 680px) {
+    .hero-section {
+      padding: 72px 18px 28px;
+    }
+  }
+
+  /* ── Main Background Video & Roll-over layer ── */
+  .main-bg-video-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: #F5F2EC;
+  }
+  .main-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+    display: block;
+  }
+  .main-bg-video-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at 50% 35%,
+      rgba(245, 242, 236, 0.04) 0%,
+      rgba(245, 242, 236, 0.16) 65%,
+      rgba(245, 242, 236, 0.36) 100%
+    );
+  }
+
+  /* ── Rolling content overlay with white highly blur gradient foreground ── */
+  .rolling-sections-layer {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .roll-over-blur-gradient {
+    position: relative;
+    width: 100%;
+    height: clamp(180px, 26vh, 320px);
+    pointer-events: none;
+    margin-bottom: -1px;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.28) 22%,
+      rgba(255, 255, 255, 0.72) 60%,
+      rgba(245, 242, 236, 0.94) 86%,
+      var(--bg) 100%
+    );
+    backdrop-filter: blur(56px) saturate(180%);
+    -webkit-backdrop-filter: blur(56px) saturate(180%);
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 0.18) 18%,
+      rgba(0, 0, 0, 0.82) 68%,
+      black 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 0.18) 18%,
+      rgba(0, 0, 0, 0.82) 68%,
+      black 100%
+    );
+  }
+
+  .rolling-sections-body {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(245, 242, 236, 0.94) 220px,
+      rgba(245, 242, 236, 0.98) 650px,
+      var(--bg) 1200px
+    );
+    backdrop-filter: blur(56px) saturate(180%);
+    -webkit-backdrop-filter: blur(56px) saturate(180%);
+    position: relative;
+    width: 100%;
+  }
+
   @media (max-width: 920px) {
     .grid-1-2, .grid-1-14 { grid-template-columns: 1fr; }
     .team-role { display: none; }
@@ -946,6 +1046,62 @@ function Marquee() {
   );
 }
 
+/* ─── MAIN BACKGROUND VIDEO ───────────────────────────────────────────────── */
+const HERO_BG_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260517_070729_32a7eb4e-d6e2-4571-badc-91b4dab1ecbe.mp4";
+
+function MainBackgroundVideo() {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Autoplay policy: must be muted to autoplay reliably across all browsers
+    video.defaultMuted = true;
+    video.muted = true;
+
+    // "the video should stop after its done playing in its first go after that dont repeat replay the video"
+    const handleEnded = () => {
+      video.pause();
+    };
+
+    video.addEventListener("ended", handleEnded);
+
+    if (video.play) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay restricted or deferred; poster fallback active
+        });
+      }
+    }
+
+    return () => {
+      video.removeEventListener("ended", handleEnded);
+    };
+  }, []);
+
+  return (
+    <div className="main-bg-video-wrap" aria-hidden="true">
+      <video
+        ref={videoRef}
+        src={HERO_BG_VIDEO}
+        poster={process.env.PUBLIC_URL + "/hero-poster.webp"}
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+        className="main-bg-video"
+        onEnded={(e) => {
+          e.currentTarget.pause();
+        }}
+      />
+      <div className="main-bg-video-scrim" />
+    </div>
+  );
+}
+
 /* ─── HERO ────────────────────────────────────────────────────────────────── */
 const HERO_WORDS = ["human.", "calm.", "intentional.", "thoughtful.", "minimal."];
 
@@ -953,6 +1109,10 @@ function Hero() {
   const [typed, setTyped] = useState("");
   const [wi, setWi] = useState(0);
   const [deleting, setDeleting] = useState(false);
+
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 480], [1, 0]);
+  const heroY = useTransform(scrollY, [0, 480], [0, -45]);
 
   useEffect(() => {
     const word = HERO_WORDS[wi];
@@ -974,21 +1134,38 @@ function Hero() {
     <section
       id="home"
       aria-label="Hero — Studio91 digital product studio"
-      style={{
-        minHeight: "100svh",
-        display: "flex", flexDirection: "column", justifyContent: "flex-end",
-        padding: "96px clamp(20px,5vw,56px) clamp(44px,8vw,80px)",
-        position: "relative",
-      }}
+      className="hero-section"
     >
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.2, duration: 0.6 }}
         className="nav-desktop"
-        style={{ position: "absolute", top: 86, right: "clamp(20px,5vw,56px)", textAlign: "right" }}
+        style={{
+          position: "absolute",
+          top: 86,
+          right: "clamp(20px,5vw,56px)",
+          textAlign: "right",
+          opacity: heroOpacity,
+        }}
         aria-hidden="true"
       >
-        <div style={{ fontSize: 10, color: "var(--ink-muted)", letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 2.2 }}>
+        <div
+          style={{
+            padding: "8px 16px",
+            background: "rgba(255, 255, 255, 0.55)",
+            backdropFilter: "blur(18px)",
+            WebkitBackdropFilter: "blur(18px)",
+            borderRadius: 10,
+            border: "1px solid rgba(255, 255, 255, 0.75)",
+            boxShadow: "0 4px 18px rgba(13,13,13,0.05)",
+            fontSize: 10,
+            color: "var(--ink-muted)",
+            letterSpacing: "0.1em",
+            textTransform: "uppercase",
+            lineHeight: 2.1,
+          }}
+        >
           <div>Jaipur, IN</div>
           <div>Est. 2024</div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 4, color: "var(--ink)" }}>
@@ -998,39 +1175,89 @@ function Hero() {
         </div>
       </motion.div>
 
+      <motion.div style={{ opacity: heroOpacity, y: heroY, width: "100%" }}>
+        <FadeIn delay={0.17}>
+          <h1
+            style={{
+              fontFamily: "var(--serif)",
+              fontSize: "clamp(44px,9.5vw,120px)",
+              lineHeight: 0.94,
+              letterSpacing: "-0.03em",
+              fontWeight: 400,
+              marginBottom: 32,
+              textShadow: "0 2px 28px rgba(245, 242, 236, 0.9), 0 1px 4px rgba(245, 242, 236, 0.95)",
+            }}
+          >
+            Software that<br />
+            feels{" "}
+            <span style={{ fontStyle: "italic", color: "var(--ink-muted)" }} aria-live="polite" aria-label={`feels ${typed}`}>
+              {typed}<span className="cursor" aria-hidden="true" />
+            </span>
+          </h1>
+        </FadeIn>
 
-      <FadeIn delay={0.17}>
-        <h1 style={{
-          fontFamily: "var(--serif)",
-          fontSize: "clamp(44px,9.5vw,120px)",
-          lineHeight: 0.94, letterSpacing: "-0.03em",
-          fontWeight: 400, marginBottom: 32,
-        }}>
-          Software that<br />
-          feels{" "}
-          <span style={{ fontStyle: "italic", color: "var(--ink-muted)" }} aria-live="polite" aria-label={`feels ${typed}`}>
-            {typed}<span className="cursor" aria-hidden="true" />
-          </span>
-        </h1>
-      </FadeIn>
-
-      <FadeIn delay={0.3}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-          <p style={{ fontSize: "clamp(14px,1.6vw,16px)", lineHeight: 1.8, color: "var(--ink-mid)", maxWidth: 520, fontFamily: "var(--sans)" }}>
-            {BRAND.overview}
-          </p>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <motion.a href="#campaigns" whileHover={{ backgroundColor: "var(--accent)", color: "var(--ink)" }}
-              style={{ padding: "13px 24px", background: "var(--ink)", color: "var(--bg)", fontSize: 10, letterSpacing: "0.13em", textTransform: "uppercase", borderRadius: 3, transition: "all 0.2s" }}>
-              Explore campaigns
-            </motion.a>
-            <motion.a href="#apps" whileHover={{ borderColor: "var(--ink)", color: "var(--ink)" }}
-              style={{ padding: "13px 24px", border: "1px solid var(--rule-strong)", fontSize: 10, letterSpacing: "0.13em", textTransform: "uppercase", borderRadius: 3, color: "var(--ink-muted)", transition: "all 0.2s" }}>
-              Our products
-            </motion.a>
+        <FadeIn delay={0.3}>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+            <p
+              style={{
+                fontSize: "clamp(14px,1.6vw,16px)",
+                lineHeight: 1.8,
+                color: "var(--ink)",
+                maxWidth: 530,
+                fontFamily: "var(--sans)",
+                padding: "16px 22px",
+                background: "rgba(255, 255, 255, 0.65)",
+                backdropFilter: "blur(24px)",
+                WebkitBackdropFilter: "blur(24px)",
+                borderRadius: 14,
+                border: "1px solid rgba(255, 255, 255, 0.8)",
+                boxShadow: "0 8px 30px rgba(13, 13, 13, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+              }}
+            >
+              {BRAND.overview}
+            </p>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+              <motion.a
+                href="#campaigns"
+                whileHover={{ backgroundColor: "var(--accent)", color: "var(--ink)" }}
+                style={{
+                  padding: "14px 26px",
+                  background: "var(--ink)",
+                  color: "var(--bg)",
+                  fontSize: 10,
+                  letterSpacing: "0.13em",
+                  textTransform: "uppercase",
+                  borderRadius: 4,
+                  transition: "all 0.2s",
+                  boxShadow: "0 6px 20px rgba(13,13,13,0.18)",
+                }}
+              >
+                Explore campaigns
+              </motion.a>
+              <motion.a
+                href="#apps"
+                whileHover={{ borderColor: "var(--ink)", color: "var(--ink)", background: "rgba(255, 255, 255, 0.9)" }}
+                style={{
+                  padding: "14px 26px",
+                  border: "1px solid rgba(13, 13, 13, 0.2)",
+                  fontSize: 10,
+                  letterSpacing: "0.13em",
+                  textTransform: "uppercase",
+                  borderRadius: 4,
+                  color: "var(--ink)",
+                  transition: "all 0.2s",
+                  background: "rgba(255, 255, 255, 0.7)",
+                  backdropFilter: "blur(18px)",
+                  WebkitBackdropFilter: "blur(18px)",
+                  boxShadow: "0 4px 16px rgba(13, 13, 13, 0.05)",
+                }}
+              >
+                Our products
+              </motion.a>
+            </div>
           </div>
-        </div>
-      </FadeIn>
+        </FadeIn>
+      </motion.div>
     </section>
   );
 }
@@ -2112,16 +2339,24 @@ export default function Studio91() {
         Skip to main content
       </a>
 
+      <MainBackgroundVideo />
       <Nav active={active} />
-      <main id="main-content">
+      <main id="main-content" style={{ position: "relative", zIndex: 2 }}>
         <Hero />
-        <Marquee />
-        <About />
-        <Apps />
-        <Campaigns />
-        <Team />
+        <div className="rolling-sections-layer">
+          <div className="roll-over-blur-gradient" aria-hidden="true" />
+          <div className="rolling-sections-body">
+            <Marquee />
+            <About />
+            <Apps />
+            <Campaigns />
+            <Team />
+          </div>
+        </div>
       </main>
-      <Footer />
+      <div style={{ position: "relative", zIndex: 5 }}>
+        <Footer />
+      </div>
     </>
   );
 }
