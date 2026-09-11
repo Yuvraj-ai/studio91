@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 
 /* ─── DATA & CONSTANTS ────────────────────────────────────────────────────── */
 const BRAND = {
@@ -597,6 +597,108 @@ const css = `
     color: var(--ink-muted);
   }
 
+  /* ── Hero section responsive layout ── */
+  .hero-section {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: clamp(96px, 14vh, 140px) clamp(20px, 5vw, 56px) clamp(70px, 12vh, 120px);
+    position: relative;
+    text-align: center;
+  }
+  @media (max-width: 680px) {
+    .hero-section {
+      padding: 84px 20px 48px;
+    }
+  }
+
+  /* ── Main Background Video & Roll-over layer ── */
+  .main-bg-video-wrap {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    background: #F5F2EC;
+  }
+  .main-bg-video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+    display: block;
+  }
+  .main-bg-video-scrim {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+      ellipse at 50% 35%,
+      rgba(245, 242, 236, 0.04) 0%,
+      rgba(245, 242, 236, 0.16) 65%,
+      rgba(245, 242, 236, 0.36) 100%
+    );
+  }
+
+  /* ── Rolling content overlay with white highly blur gradient foreground ── */
+  .rolling-sections-layer {
+    position: relative;
+    z-index: 5;
+    width: 100%;
+    margin-top: 0;
+  }
+
+  .roll-over-blur-gradient {
+    position: relative;
+    width: 100%;
+    height: clamp(180px, 26vh, 320px);
+    pointer-events: none;
+    margin-bottom: -1px;
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.28) 22%,
+      rgba(255, 255, 255, 0.72) 60%,
+      rgba(245, 242, 236, 0.94) 86%,
+      var(--bg) 100%
+    );
+    backdrop-filter: blur(56px) saturate(180%);
+    -webkit-backdrop-filter: blur(56px) saturate(180%);
+    mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 0.18) 18%,
+      rgba(0, 0, 0, 0.82) 68%,
+      black 100%
+    );
+    -webkit-mask-image: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(0, 0, 0, 0.18) 18%,
+      rgba(0, 0, 0, 0.82) 68%,
+      black 100%
+    );
+  }
+
+  .rolling-sections-body {
+    background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.9) 0%,
+      rgba(245, 242, 236, 0.94) 220px,
+      rgba(245, 242, 236, 0.98) 650px,
+      var(--bg) 1200px
+    );
+    backdrop-filter: blur(56px) saturate(180%);
+    -webkit-backdrop-filter: blur(56px) saturate(180%);
+    position: relative;
+    width: 100%;
+  }
+
   @media (max-width: 920px) {
     .grid-1-2, .grid-1-14 { grid-template-columns: 1fr; }
     .team-role { display: none; }
@@ -946,6 +1048,62 @@ function Marquee() {
   );
 }
 
+/* ─── MAIN BACKGROUND VIDEO ───────────────────────────────────────────────── */
+const HERO_BG_VIDEO =
+  "https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260517_070729_32a7eb4e-d6e2-4571-badc-91b4dab1ecbe.mp4";
+
+function MainBackgroundVideo() {
+  const videoRef = useRef(null);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Autoplay policy: must be muted to autoplay reliably across all browsers
+    video.defaultMuted = true;
+    video.muted = true;
+
+    // "the video should stop after its done playing in its first go after that dont repeat replay the video"
+    const handleEnded = () => {
+      video.pause();
+    };
+
+    video.addEventListener("ended", handleEnded);
+
+    if (video.play) {
+      const playPromise = video.play();
+      if (playPromise !== undefined) {
+        playPromise.catch(() => {
+          // Autoplay restricted or deferred; poster fallback active
+        });
+      }
+    }
+
+    return () => {
+      video.removeEventListener("ended", handleEnded);
+    };
+  }, []);
+
+  return (
+    <div className="main-bg-video-wrap" aria-hidden="true">
+      <video
+        ref={videoRef}
+        src={HERO_BG_VIDEO}
+        poster={process.env.PUBLIC_URL + "/hero-poster.webp"}
+        autoPlay
+        muted
+        playsInline
+        preload="auto"
+        className="main-bg-video"
+        onEnded={(e) => {
+          e.currentTarget.pause();
+        }}
+      />
+      <div className="main-bg-video-scrim" />
+    </div>
+  );
+}
+
 /* ─── HERO ────────────────────────────────────────────────────────────────── */
 const HERO_WORDS = ["human.", "calm.", "intentional.", "thoughtful.", "minimal."];
 
@@ -953,6 +1111,10 @@ function Hero() {
   const [typed, setTyped] = useState("");
   const [wi, setWi] = useState(0);
   const [deleting, setDeleting] = useState(false);
+
+  const { scrollY } = useScroll();
+  const heroOpacity = useTransform(scrollY, [0, 480], [1, 0]);
+  const heroY = useTransform(scrollY, [0, 480], [0, -45]);
 
   useEffect(() => {
     const word = HERO_WORDS[wi];
@@ -974,63 +1136,107 @@ function Hero() {
     <section
       id="home"
       aria-label="Hero — Studio91 digital product studio"
-      style={{
-        minHeight: "100svh",
-        display: "flex", flexDirection: "column", justifyContent: "flex-end",
-        padding: "96px clamp(20px,5vw,56px) clamp(44px,8vw,80px)",
-        position: "relative",
-      }}
+      className="hero-section"
     >
       <motion.div
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.6 }}
-        className="nav-desktop"
-        style={{ position: "absolute", top: 86, right: "clamp(20px,5vw,56px)", textAlign: "right" }}
-        aria-hidden="true"
+        style={{
+          opacity: heroOpacity,
+          y: heroY,
+          width: "100%",
+          maxWidth: 780,
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+        }}
       >
-        <div style={{ fontSize: 10, color: "var(--ink-muted)", letterSpacing: "0.1em", textTransform: "uppercase", lineHeight: 2.2 }}>
-          <div>Jaipur, IN</div>
-          <div>Est. 2024</div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 4, color: "var(--ink)" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ADE80", display: "inline-block" }} />
-            Available for projects
+        <FadeIn delay={0.17}>
+          <h1
+            style={{
+              fontFamily: "var(--serif)",
+              fontSize: "clamp(42px, 6.2vw, 84px)",
+              lineHeight: 1.05,
+              letterSpacing: "-0.03em",
+              fontWeight: 400,
+              marginBottom: 20,
+              textAlign: "center",
+              textShadow: "0 2px 28px rgba(245, 242, 236, 0.95), 0 1px 4px rgba(245, 242, 236, 0.95)",
+            }}
+          >
+            Software that<br />
+            feels{" "}
+            <span style={{ fontStyle: "italic", color: "var(--ink-muted)" }} aria-live="polite" aria-label={`feels ${typed}`}>
+              {typed}<span className="cursor" aria-hidden="true" />
+            </span>
+          </h1>
+        </FadeIn>
+
+        <FadeIn delay={0.3}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontSize: "clamp(14.5px, 1.55vw, 17px)",
+                lineHeight: 1.85,
+                color: "var(--ink-mid)",
+                maxWidth: 620,
+                fontFamily: "var(--sans)",
+                textAlign: "center",
+                margin: "0 auto",
+                textShadow: "0 1px 16px rgba(245, 242, 236, 0.9)",
+              }}
+            >
+              {BRAND.overview}
+            </p>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 28 }}>
+              <motion.a
+                href="#campaigns"
+                whileHover={{ backgroundColor: "var(--accent)", color: "var(--ink)" }}
+                style={{
+                  padding: "14px 28px",
+                  background: "var(--ink)",
+                  color: "var(--bg)",
+                  fontSize: 10,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  borderRadius: 4,
+                  transition: "all 0.2s",
+                  boxShadow: "0 6px 20px rgba(13,13,13,0.18)",
+                }}
+              >
+                Explore campaigns
+              </motion.a>
+              <motion.a
+                href="#apps"
+                whileHover={{ borderColor: "var(--ink)", color: "var(--ink)", background: "rgba(255, 255, 255, 0.95)" }}
+                style={{
+                  padding: "14px 28px",
+                  border: "1px solid rgba(13, 13, 13, 0.2)",
+                  fontSize: 10,
+                  letterSpacing: "0.14em",
+                  textTransform: "uppercase",
+                  borderRadius: 4,
+                  color: "var(--ink)",
+                  transition: "all 0.2s",
+                  background: "rgba(255, 255, 255, 0.65)",
+                  backdropFilter: "blur(18px)",
+                  WebkitBackdropFilter: "blur(18px)",
+                  boxShadow: "0 4px 16px rgba(13, 13, 13, 0.05)",
+                }}
+              >
+                Our products
+              </motion.a>
+            </div>
           </div>
-        </div>
+        </FadeIn>
       </motion.div>
-
-
-      <FadeIn delay={0.17}>
-        <h1 style={{
-          fontFamily: "var(--serif)",
-          fontSize: "clamp(44px,9.5vw,120px)",
-          lineHeight: 0.94, letterSpacing: "-0.03em",
-          fontWeight: 400, marginBottom: 32,
-        }}>
-          Software that<br />
-          feels{" "}
-          <span style={{ fontStyle: "italic", color: "var(--ink-muted)" }} aria-live="polite" aria-label={`feels ${typed}`}>
-            {typed}<span className="cursor" aria-hidden="true" />
-          </span>
-        </h1>
-      </FadeIn>
-
-      <FadeIn delay={0.3}>
-        <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
-          <p style={{ fontSize: "clamp(14px,1.6vw,16px)", lineHeight: 1.8, color: "var(--ink-mid)", maxWidth: 520, fontFamily: "var(--sans)" }}>
-            {BRAND.overview}
-          </p>
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-            <motion.a href="#campaigns" whileHover={{ backgroundColor: "var(--accent)", color: "var(--ink)" }}
-              style={{ padding: "13px 24px", background: "var(--ink)", color: "var(--bg)", fontSize: 10, letterSpacing: "0.13em", textTransform: "uppercase", borderRadius: 3, transition: "all 0.2s" }}>
-              Explore campaigns
-            </motion.a>
-            <motion.a href="#apps" whileHover={{ borderColor: "var(--ink)", color: "var(--ink)" }}
-              style={{ padding: "13px 24px", border: "1px solid var(--rule-strong)", fontSize: 10, letterSpacing: "0.13em", textTransform: "uppercase", borderRadius: 3, color: "var(--ink-muted)", transition: "all 0.2s" }}>
-              Our products
-            </motion.a>
-          </div>
-        </div>
-      </FadeIn>
     </section>
   );
 }
@@ -1505,16 +1711,19 @@ function Team() {
 
 /* ─── FOOTER SLIDESHOW IMAGES ─────────────────────────────────────────────── */
 // The hollow "studio" bottom wordmark cycles through these images.
-// You can replace or add custom image paths here anytime:
+// Each entry specifies the image and optimal framing position:
 export const FOOTER_SLIDESHOW_IMAGES = [
-  "/behind/claudio-testa--SO3JtE3gZo-unsplash.jpg",
-  "/behind/jaanus-jagomagi-7aTrthCFBiU-unsplash.jpg",
-  "/behind/mimipic-photography-XmR3y0bp3Kw-unsplash.jpg",
-  "/behind/mulyadi-kIYH9ja6HhY-unsplash.jpg",
-  "/behind/peakpx.jpg",
-  "/behind/restu-kurnia-oPZih_dRKvQ-unsplash.jpg",
-  "/behind/teemu-paananen-OOE4xAnBhKo-unsplash.jpg",
+  { src: "/behind/peakpx.jpg", position: "center 45%" },
+  { src: "/behind/claudio-testa--SO3JtE3gZo-unsplash.jpg", position: "center 70%" },
+  { src: "/behind/mulyadi-kIYH9ja6HhY-unsplash.jpg", position: "center 50%" },
+  { src: "/behind/jaanus-jagomagi-7aTrthCFBiU-unsplash.jpg", position: "center 60%" },
+  { src: "/behind/restu-kurnia-oPZih_dRKvQ-unsplash.jpg", position: "center 40%" },
+  { src: "/behind/teemu-paananen-OOE4xAnBhKo-unsplash.jpg", position: "center 50%" },
+  { src: "/behind/mimipic-photography-XmR3y0bp3Kw-unsplash.jpg", position: "center 70%" },
 ];
+
+const getImageSrc = (item) => (typeof item === "string" ? item : item.src);
+const getImagePos = (item) => (typeof item === "object" && item.position ? item.position : "center");
 
 /* ─── FOOTER & CONTACT ────────────────────────────────────────────────────── */
 function Footer() {
@@ -1568,28 +1777,28 @@ function Footer() {
     }
   }
 
-  // Slideshow state for hollow "studio" wordmark
+  // Slideshow state for hollow "studio" wordmark: steady metronome timer
   const [slideIndex, setSlideIndex] = useState(0);
-  const [prevSlideIndex, setPrevSlideIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Preload all slideshow images on mount so transitions never hitch or stutter
+  useEffect(() => {
+    FOOTER_SLIDESHOW_IMAGES.forEach((item) => {
+      const img = new Image();
+      img.src = process.env.PUBLIC_URL + getImageSrc(item);
+    });
+  }, []);
+
+  // Metronome timer: perfectly consistent 4.2s intervals
   useEffect(() => {
     if (!FOOTER_SLIDESHOW_IMAGES.length) return;
     const interval = setInterval(() => {
-      setPrevSlideIndex(slideIndex);
       setSlideIndex((prev) => (prev + 1) % FOOTER_SLIDESHOW_IMAGES.length);
-      setIsTransitioning(true);
-      const timer = setTimeout(() => setIsTransitioning(false), 1200);
-      return () => clearTimeout(timer);
-    }, 4000);
+    }, 4200);
     return () => clearInterval(interval);
-  }, [slideIndex]);
+  }, []);
 
   const advanceSlide = () => {
-    setPrevSlideIndex(slideIndex);
     setSlideIndex((prev) => (prev + 1) % FOOTER_SLIDESHOW_IMAGES.length);
-    setIsTransitioning(true);
-    setTimeout(() => setIsTransitioning(false), 1200);
   };
 
   const directoryColumns = [
@@ -1647,8 +1856,8 @@ function Footer() {
   const wordmarkFontStyle = {
     fontFamily: "var(--serif)",
     fontSize: "clamp(46px, 15.5vw, 240px)",
-    fontWeight: 700,
-    lineHeight: 0.82,
+    fontWeight: 400,
+    lineHeight: 1.15,
     letterSpacing: "-0.04em",
     userSelect: "none",
     textTransform: "lowercase",
@@ -1990,10 +2199,10 @@ function Footer() {
           width: "100%",
           overflow: "hidden",
           borderTop: "1px solid var(--rule)",
-          paddingTop: "clamp(28px, 4vw, 54px)",
-          marginBottom: "-0.04em",
+          paddingTop: "clamp(24px, 3.5vw, 48px)",
+          paddingBottom: "clamp(8px, 1.5vw, 20px)",
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
         }}
@@ -2001,73 +2210,62 @@ function Footer() {
         title="Click to cycle slideshow visuals"
       >
         <div style={{ display: "inline-flex", alignItems: "baseline", justifyContent: "center", gap: "clamp(4px, 1.2vw, 18px)", textAlign: "center" }}>
-          {/* Hollow "studio" with interior photo slideshow */}
-          <div style={{ position: "relative", display: "inline-block" }}>
-            {/* Base slide */}
-            <div
+          {/* Hollow "studio" with interior photo slideshow without black borders */}
+          <div style={{ position: "relative", display: "inline-block", lineHeight: 1.15 }}>
+            {/* Structural invisible text ensuring exact layout bounds for ascenders and descenders */}
+            <span
               style={{
                 ...wordmarkFontStyle,
-                backgroundImage: `url(${process.env.PUBLIC_URL + FOOTER_SLIDESHOW_IMAGES[prevSlideIndex]})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center 38%",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                color: "transparent",
+                visibility: "hidden",
+                pointerEvents: "none",
+                display: "block",
+                lineHeight: 1.15,
               }}
+              aria-hidden="true"
             >
               studio
-            </div>
+            </span>
 
-            {/* Fading in slide */}
-            {isTransitioning && (
-              <motion.div
+            {/* Crossfading image slide without black borders */}
+            <AnimatePresence initial={false}>
+              <motion.span
+                key={slideIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1.2, ease: "easeInOut" }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
                 style={{
                   position: "absolute",
-                  top: 0,
-                  left: 0,
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
                   ...wordmarkFontStyle,
-                  backgroundImage: `url(${process.env.PUBLIC_URL + FOOTER_SLIDESHOW_IMAGES[slideIndex]})`,
+                  lineHeight: 1.15,
+                  backgroundImage: `url(${process.env.PUBLIC_URL + getImageSrc(FOOTER_SLIDESHOW_IMAGES[slideIndex])})`,
                   backgroundSize: "cover",
-                  backgroundPosition: "center 38%",
+                  backgroundPosition: getImagePos(FOOTER_SLIDESHOW_IMAGES[slideIndex]),
+                  backgroundRepeat: "no-repeat",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   color: "transparent",
+                  display: "block",
+                  pointerEvents: "none",
                 }}
               >
                 studio
-              </motion.div>
-            )}
-
-            {/* Architectural crisp stroke overlay */}
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                pointerEvents: "none",
-                ...wordmarkFontStyle,
-                color: "transparent",
-                WebkitTextStroke: "1.5px rgba(13, 13, 13, 0.32)",
-              }}
-            >
-              studio
-            </div>
+              </motion.span>
+            </AnimatePresence>
           </div>
 
-          {/* "91" in Electric Chartreuse (#C8FF00) brand book green */}
+          {/* "91" in Electric Chartreuse (#C8FF00) brand book green without black borders */}
           <span
             style={{
               ...wordmarkFontStyle,
+              lineHeight: 1.15,
               color: "var(--accent)",
-              WebkitTextStroke: "1.5px rgba(13, 13, 13, 0.32)",
-              textShadow: "0 0 35px rgba(200, 255, 0, 0.35)",
               display: "inline-block",
+              userSelect: "none",
             }}
           >
             91
@@ -2120,16 +2318,24 @@ export default function Studio91() {
         Skip to main content
       </a>
 
+      <MainBackgroundVideo />
       <Nav active={active} />
-      <main id="main-content">
+      <main id="main-content" style={{ position: "relative", zIndex: 2 }}>
         <Hero />
-        <Marquee />
-        <About />
-        <Apps />
-        <Campaigns />
-        <Team />
+        <div className="rolling-sections-layer">
+          <div className="roll-over-blur-gradient" aria-hidden="true" />
+          <div className="rolling-sections-body">
+            <Marquee />
+            <About />
+            <Apps />
+            <Campaigns />
+            <Team />
+          </div>
+        </div>
       </main>
-      <Footer />
+      <div style={{ position: "relative", zIndex: 5 }}>
+        <Footer />
+      </div>
     </>
   );
 }
