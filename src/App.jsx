@@ -602,13 +602,15 @@ const css = `
     min-height: 100svh;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
-    padding: 96px clamp(20px, 5vw, 56px) clamp(54px, 8vw, 96px);
+    align-items: center;
+    justify-content: center;
+    padding: clamp(96px, 14vh, 140px) clamp(20px, 5vw, 56px) clamp(70px, 12vh, 120px);
     position: relative;
+    text-align: center;
   }
   @media (max-width: 680px) {
     .hero-section {
-      padding: 72px 18px 28px;
+      padding: 84px 20px 48px;
     }
   }
 
@@ -1175,17 +1177,30 @@ function Hero() {
         </div>
       </motion.div>
 
-      <motion.div style={{ opacity: heroOpacity, y: heroY, width: "100%" }}>
+      <motion.div
+        style={{
+          opacity: heroOpacity,
+          y: heroY,
+          width: "100%",
+          maxWidth: 780,
+          margin: "0 auto",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          textAlign: "center",
+        }}
+      >
         <FadeIn delay={0.17}>
           <h1
             style={{
               fontFamily: "var(--serif)",
-              fontSize: "clamp(44px,9.5vw,120px)",
-              lineHeight: 0.94,
+              fontSize: "clamp(42px, 6.2vw, 84px)",
+              lineHeight: 1.05,
               letterSpacing: "-0.03em",
               fontWeight: 400,
-              marginBottom: 32,
-              textShadow: "0 2px 28px rgba(245, 242, 236, 0.9), 0 1px 4px rgba(245, 242, 236, 0.95)",
+              marginBottom: 20,
+              textAlign: "center",
+              textShadow: "0 2px 28px rgba(245, 242, 236, 0.95), 0 1px 4px rgba(245, 242, 236, 0.95)",
             }}
           >
             Software that<br />
@@ -1197,35 +1212,38 @@ function Hero() {
         </FadeIn>
 
         <FadeIn delay={0.3}>
-          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", flexWrap: "wrap", gap: 24 }}>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              textAlign: "center",
+            }}
+          >
             <p
               style={{
-                fontSize: "clamp(14px,1.6vw,16px)",
-                lineHeight: 1.8,
-                color: "var(--ink)",
-                maxWidth: 530,
+                fontSize: "clamp(14.5px, 1.55vw, 17px)",
+                lineHeight: 1.85,
+                color: "var(--ink-mid)",
+                maxWidth: 620,
                 fontFamily: "var(--sans)",
-                padding: "16px 22px",
-                background: "rgba(255, 255, 255, 0.65)",
-                backdropFilter: "blur(24px)",
-                WebkitBackdropFilter: "blur(24px)",
-                borderRadius: 14,
-                border: "1px solid rgba(255, 255, 255, 0.8)",
-                boxShadow: "0 8px 30px rgba(13, 13, 13, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                textAlign: "center",
+                margin: "0 auto",
+                textShadow: "0 1px 16px rgba(245, 242, 236, 0.9)",
               }}
             >
               {BRAND.overview}
             </p>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginTop: 28 }}>
               <motion.a
                 href="#campaigns"
                 whileHover={{ backgroundColor: "var(--accent)", color: "var(--ink)" }}
                 style={{
-                  padding: "14px 26px",
+                  padding: "14px 28px",
                   background: "var(--ink)",
                   color: "var(--bg)",
                   fontSize: 10,
-                  letterSpacing: "0.13em",
+                  letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   borderRadius: 4,
                   transition: "all 0.2s",
@@ -1236,17 +1254,17 @@ function Hero() {
               </motion.a>
               <motion.a
                 href="#apps"
-                whileHover={{ borderColor: "var(--ink)", color: "var(--ink)", background: "rgba(255, 255, 255, 0.9)" }}
+                whileHover={{ borderColor: "var(--ink)", color: "var(--ink)", background: "rgba(255, 255, 255, 0.95)" }}
                 style={{
-                  padding: "14px 26px",
+                  padding: "14px 28px",
                   border: "1px solid rgba(13, 13, 13, 0.2)",
                   fontSize: 10,
-                  letterSpacing: "0.13em",
+                  letterSpacing: "0.14em",
                   textTransform: "uppercase",
                   borderRadius: 4,
                   color: "var(--ink)",
                   transition: "all 0.2s",
-                  background: "rgba(255, 255, 255, 0.7)",
+                  background: "rgba(255, 255, 255, 0.65)",
                   backdropFilter: "blur(18px)",
                   WebkitBackdropFilter: "blur(18px)",
                   boxShadow: "0 4px 16px rgba(13, 13, 13, 0.05)",
