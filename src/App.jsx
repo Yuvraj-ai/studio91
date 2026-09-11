@@ -1505,16 +1505,19 @@ function Team() {
 
 /* ─── FOOTER SLIDESHOW IMAGES ─────────────────────────────────────────────── */
 // The hollow "studio" bottom wordmark cycles through these images.
-// You can replace or add custom image paths here anytime:
+// Each entry specifies the image and optimal framing position:
 export const FOOTER_SLIDESHOW_IMAGES = [
-  "/behind/claudio-testa--SO3JtE3gZo-unsplash.jpg",
-  "/behind/jaanus-jagomagi-7aTrthCFBiU-unsplash.jpg",
-  "/behind/mimipic-photography-XmR3y0bp3Kw-unsplash.jpg",
-  "/behind/mulyadi-kIYH9ja6HhY-unsplash.jpg",
-  "/behind/peakpx.jpg",
-  "/behind/restu-kurnia-oPZih_dRKvQ-unsplash.jpg",
-  "/behind/teemu-paananen-OOE4xAnBhKo-unsplash.jpg",
+  { src: "/behind/peakpx.jpg", position: "center 45%" },
+  { src: "/behind/claudio-testa--SO3JtE3gZo-unsplash.jpg", position: "center 70%" },
+  { src: "/behind/mulyadi-kIYH9ja6HhY-unsplash.jpg", position: "center 50%" },
+  { src: "/behind/jaanus-jagomagi-7aTrthCFBiU-unsplash.jpg", position: "center 60%" },
+  { src: "/behind/restu-kurnia-oPZih_dRKvQ-unsplash.jpg", position: "center 40%" },
+  { src: "/behind/teemu-paananen-OOE4xAnBhKo-unsplash.jpg", position: "center 50%" },
+  { src: "/behind/mimipic-photography-XmR3y0bp3Kw-unsplash.jpg", position: "center 70%" },
 ];
+
+const getImageSrc = (item) => (typeof item === "string" ? item : item.src);
+const getImagePos = (item) => (typeof item === "object" && item.position ? item.position : "center");
 
 /* ─── FOOTER & CONTACT ────────────────────────────────────────────────────── */
 function Footer() {
@@ -1568,28 +1571,28 @@ function Footer() {
     }
   }
 
-  // Slideshow state for hollow "studio" wordmark
+  // Slideshow state for hollow "studio" wordmark: steady metronome timer
   const [slideIndex, setSlideIndex] = useState(0);
-  const [prevSlideIndex, setPrevSlideIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
+  // Preload all slideshow images on mount so transitions never hitch or stutter
+  useEffect(() => {
+    FOOTER_SLIDESHOW_IMAGES.forEach((item) => {
+      const img = new Image();
+      img.src = process.env.PUBLIC_URL + getImageSrc(item);
+    });
+  }, []);
+
+  // Metronome timer: perfectly consistent 4.2s intervals
   useEffect(() => {
     if (!FOOTER_SLIDESHOW_IMAGES.length) return;
     const interval = setInterval(() => {
-      setPrevSlideIndex(slideIndex);
       setSlideIndex((prev) => (prev + 1) % FOOTER_SLIDESHOW_IMAGES.length);
-      setIsTransitioning(true);
-      const timer = setTimeout(() => setIsTransitioning(false), 1200);
-      return () => clearTimeout(timer);
-    }, 4000);
+    }, 4200);
     return () => clearInterval(interval);
-  }, [slideIndex]);
+  }, []);
 
   const advanceSlide = () => {
-    setPrevSlideIndex(slideIndex);
     setSlideIndex((prev) => (prev + 1) % FOOTER_SLIDESHOW_IMAGES.length);
-    setIsTransitioning(true);
-    setTimeout(() => setIsTransitioning(false), 1200);
   };
 
   const directoryColumns = [
@@ -1647,8 +1650,8 @@ function Footer() {
   const wordmarkFontStyle = {
     fontFamily: "var(--serif)",
     fontSize: "clamp(46px, 15.5vw, 240px)",
-    fontWeight: 700,
-    lineHeight: 0.82,
+    fontWeight: 400,
+    lineHeight: 1.15,
     letterSpacing: "-0.04em",
     userSelect: "none",
     textTransform: "lowercase",
@@ -1990,10 +1993,10 @@ function Footer() {
           width: "100%",
           overflow: "hidden",
           borderTop: "1px solid var(--rule)",
-          paddingTop: "clamp(28px, 4vw, 54px)",
-          marginBottom: "-0.04em",
+          paddingTop: "clamp(24px, 3.5vw, 48px)",
+          paddingBottom: "clamp(8px, 1.5vw, 20px)",
           display: "flex",
-          alignItems: "baseline",
+          alignItems: "center",
           justifyContent: "center",
           cursor: "pointer",
         }}
@@ -2001,73 +2004,62 @@ function Footer() {
         title="Click to cycle slideshow visuals"
       >
         <div style={{ display: "inline-flex", alignItems: "baseline", justifyContent: "center", gap: "clamp(4px, 1.2vw, 18px)", textAlign: "center" }}>
-          {/* Hollow "studio" with interior photo slideshow */}
-          <div style={{ position: "relative", display: "inline-block" }}>
-            {/* Base slide */}
-            <div
+          {/* Hollow "studio" with interior photo slideshow without black borders */}
+          <div style={{ position: "relative", display: "inline-block", lineHeight: 1.15 }}>
+            {/* Structural invisible text ensuring exact layout bounds for ascenders and descenders */}
+            <span
               style={{
                 ...wordmarkFontStyle,
-                backgroundImage: `url(${process.env.PUBLIC_URL + FOOTER_SLIDESHOW_IMAGES[prevSlideIndex]})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center 38%",
-                WebkitBackgroundClip: "text",
-                backgroundClip: "text",
-                WebkitTextFillColor: "transparent",
-                color: "transparent",
+                visibility: "hidden",
+                pointerEvents: "none",
+                display: "block",
+                lineHeight: 1.15,
               }}
+              aria-hidden="true"
             >
               studio
-            </div>
+            </span>
 
-            {/* Fading in slide */}
-            {isTransitioning && (
-              <motion.div
+            {/* Crossfading image slide without black borders */}
+            <AnimatePresence initial={false}>
+              <motion.span
+                key={slideIndex}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 1.2, ease: "easeInOut" }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 1.2, ease: [0.25, 0.1, 0.25, 1] }}
                 style={{
                   position: "absolute",
-                  top: 0,
-                  left: 0,
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
                   ...wordmarkFontStyle,
-                  backgroundImage: `url(${process.env.PUBLIC_URL + FOOTER_SLIDESHOW_IMAGES[slideIndex]})`,
+                  lineHeight: 1.15,
+                  backgroundImage: `url(${process.env.PUBLIC_URL + getImageSrc(FOOTER_SLIDESHOW_IMAGES[slideIndex])})`,
                   backgroundSize: "cover",
-                  backgroundPosition: "center 38%",
+                  backgroundPosition: getImagePos(FOOTER_SLIDESHOW_IMAGES[slideIndex]),
+                  backgroundRepeat: "no-repeat",
                   WebkitBackgroundClip: "text",
                   backgroundClip: "text",
                   WebkitTextFillColor: "transparent",
                   color: "transparent",
+                  display: "block",
+                  pointerEvents: "none",
                 }}
               >
                 studio
-              </motion.div>
-            )}
-
-            {/* Architectural crisp stroke overlay */}
-            <div
-              aria-hidden="true"
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                pointerEvents: "none",
-                ...wordmarkFontStyle,
-                color: "transparent",
-                WebkitTextStroke: "1.5px rgba(13, 13, 13, 0.32)",
-              }}
-            >
-              studio
-            </div>
+              </motion.span>
+            </AnimatePresence>
           </div>
 
-          {/* "91" in Electric Chartreuse (#C8FF00) brand book green */}
+          {/* "91" in Electric Chartreuse (#C8FF00) brand book green without black borders */}
           <span
             style={{
               ...wordmarkFontStyle,
+              lineHeight: 1.15,
               color: "var(--accent)",
-              WebkitTextStroke: "1.5px rgba(13, 13, 13, 0.32)",
-              textShadow: "0 0 35px rgba(200, 255, 0, 0.35)",
               display: "inline-block",
+              userSelect: "none",
             }}
           >
             91
