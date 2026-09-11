@@ -1139,45 +1139,6 @@ function Hero() {
       className="hero-section"
     >
       <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2, duration: 0.6 }}
-        className="nav-desktop"
-        style={{
-          position: "absolute",
-          top: 86,
-          right: "clamp(20px,5vw,56px)",
-          textAlign: "right",
-          opacity: heroOpacity,
-        }}
-        aria-hidden="true"
-      >
-        <div
-          style={{
-            padding: "8px 16px",
-            background: "rgba(255, 255, 255, 0.55)",
-            backdropFilter: "blur(18px)",
-            WebkitBackdropFilter: "blur(18px)",
-            borderRadius: 10,
-            border: "1px solid rgba(255, 255, 255, 0.75)",
-            boxShadow: "0 4px 18px rgba(13,13,13,0.05)",
-            fontSize: 10,
-            color: "var(--ink-muted)",
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            lineHeight: 2.1,
-          }}
-        >
-          <div>Jaipur, IN</div>
-          <div>Est. 2024</div>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6, marginTop: 4, color: "var(--ink)" }}>
-            <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#4ADE80", display: "inline-block" }} />
-            Available for projects
-          </div>
-        </div>
-      </motion.div>
-
-      <motion.div
         style={{
           opacity: heroOpacity,
           y: heroY,
